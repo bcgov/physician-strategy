@@ -2,7 +2,10 @@
 title: "Physician Strategy"
 author: "Tim H"
 format: html
-bibliography: references.bib
+bibliography: 
+  - references.bib
+editor_options: 
+  chunk_output_type: console
 ---
 
 ## Quarto
@@ -25,3 +28,6 @@ You can add options to executable code like this
 ```
 
 The `echo: false` option disables the printing of code (only output is displayed).
+
+
+@brosig-koch2024, @lee2021
