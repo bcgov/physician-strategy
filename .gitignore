@@ -3,7 +3,12 @@
 .RData
 .Ruserdata
 .Renviron
+
 background
 references
-*.html
 physician-strategy_files
+data
+
+*.html
+
+

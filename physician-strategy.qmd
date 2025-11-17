@@ -6,28 +6,58 @@ bibliography:
   - references.bib
 editor_options: 
   chunk_output_type: console
+params:
+  lan_path: !expr fs::as_fs_path(Sys.getenv("LAN_path"))
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
+```{r setup}
+# install packages
+pacman::p_load(tidyverse, hsiaR)
 ```
 
-You can add options to executable code like this
-
 ```{r}
-#| echo: false
-2 * 2
+con = hiConnect()
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r}
+cihi = readxl::read_excel("data/cihi/supply-distribution-migration-physicians-in-canada-2001-2024-data-tables-en.xlsx", sheet="Table 1", range = "A3:BH84800") |>
+  rename_with(tolower) |>
+  mutate(`physician-to–100,000 population ratio` = as.double(`physician-to–100,000 population ratio`))
+```
 
+```{r}
+cihi |>
+  filter(
+    jurisdiction == 'B.C.',
+    `health region` == 'B.C.',
+    specialty == "All physicians"
+) |>
+  ggplot(aes(x=year, y=`number of physicians`, color=jurisdiction)) +
+  geom_line() +
+  geom_point() +
+  ggthemes::theme_clean() +
+  scale_color_viridis_d() + 
+  theme(legend.position = 'none') + 
+  scale_y_continuous(labels = scales::label_comma())
+```
 
-@brosig-koch2024, @lee2021
+```{r}
+good_provinces = c("Canada", "B.C.", "Alta.", "Ont.", "Man.")
+
+cihi |>
+  filter(
+    specialty == "All physicians",
+    #str_detect(jurisdiction, "Canada|\\.$") |>
+    `health region` %in% good_provinces
+  ) |>
+  mutate(is_bc = `health region` == 'B.C.') |>
+  mutate(linewidth = case_when(is_bc ~ 1.5, T ~ 1)) |>
+  ggplot(aes(x=year, y=`physician-to–100,000 population ratio`, color=jurisdiction)) +
+  geom_line(aes(linewidth = linewidth)) +
+  geom_point() +
+  ggthemes::theme_clean() +
+  scale_color_viridis_d() + 
+  scale_y_continuous(labels = scales::label_comma()) +
+  guides(linewidth = 'none')
+```
+
