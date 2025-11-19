@@ -23,13 +23,14 @@ execute:
   warning: false
   message: false
 params:
+  use_rds: yes
   lan_path: !expr fs::as_fs_path(Sys.getenv("LAN_path"))
   cihi_path: data/cihi/supply-distribution-migration-physicians-in-canada-2001-2024-data-tables-en.xlsx
 ---
 
 ```{r setup}
 # install packages
-pacman::p_load(tidyverse, hsiaR, patchwork)
+pacman::p_load(tidyverse, hsiaR, patchwork, ggiraph)
 
 # ggplot theme
 ggplot2::theme_set(
@@ -47,7 +48,7 @@ ggplot2::theme_set(
 ```
 
 ```{r}
-if (!fs::file_exists("data/cihi.rds")) {
+if (!fs::file_exists("data/cihi.rds") || !params$use_rds) {
 
   cihi = readxl::read_excel(params$cihi_path, sheet="Table 1", range = "A3:BH84800") |>
     rename_with(tolower) |>
@@ -65,22 +66,26 @@ if (!fs::file_exists("data/cihi.rds")) {
 ```
 
 ```{r}
-cihi |>
+g = cihi |>
   filter(
     jurisdiction == 'B.C.',
     health_region == 'B.C.',
     specialty == "All physicians"
 ) |>
   ggplot(aes(x=year, y=number_of_physicians, color=jurisdiction)) +
-  geom_line() +
-  geom_point() +
+  geom_line_interactive() +
+  geom_point_interactive(aes(data_id = year, tooltip = "year:" %,,% year %,% "\n# physicians:" %,,% number_of_physicians)) +
   scale_color_viridis_d() + 
   theme(legend.position = 'none') + 
   scale_y_continuous(labels = scales::label_comma()) +
   ggtitle("Physicians in B.C.")
 
+girafe(ggobj = g)
+
 ggsave('images/g1.png')
 ```
+
+
 
 ```{r}
 good_provinces = c("Canada", "B.C.", "Alta.", "Ont.", "Man.")
