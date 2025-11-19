@@ -1,0 +1,37 @@
+/*-- scss:defaults --*/
+
+// fonts
+$font-family-sans-serif: "BC Sans";
+
+// colors
+$body-color: #000000;
+
+// headings
+$presentation-heading-font: "BC Sans";
+
+/*-- scss:rules --*/
+.reveal {
+  color: #000000 !important;
+}
+
+.reveal .slide-background.title-slide {
+  background-color: #003366 !important;
+  background-image: url('/www/bcstats_logo_rev.png') !important;
+  background-size: 300px auto;
+  background-position: right 20px bottom;
+  background-repeat: no-repeat;
+}
+
+
+.reveal h2 {
+  background-color: #003366;
+  color: #ffffff;
+  padding: 20px 60px;  // add horizontal padding for text
+  margin: 0;
+  width: 100%;
+  border-bottom:2px solid #fcba19;
+  background-image: url('/www/bcstats_logo_rev.png');
+  background-size: 180px auto;
+  background-position: right 20px center;
+  background-repeat: no-repeat;
+}
