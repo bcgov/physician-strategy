@@ -10,11 +10,7 @@ $body-color: #000000;
 $presentation-heading-font: "BC Sans";
 
 /*-- scss:rules --*/
-.reveal .slide ul {
-  padding-left: .5em;
-}
-
-h1 {
+h1, p, .reveal .slide ul, .reveal .slide ol {
   padding-left: .5em;
 }
 
