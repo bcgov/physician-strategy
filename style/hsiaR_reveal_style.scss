@@ -14,7 +14,7 @@ h1, p, .reveal .slide ul, .reveal .slide ol {
 
 .reveal .slide-background.title-slide {
   background-color: #003366 !important;
-  background-image: url('/BC_HLTH_H_RGB_rev.png') !important;
+  background-image: url('/style/BC_HLTH_H_RGB_rev.png') !important;
   background-size: 300px auto;
   background-position: right 20px bottom;
   background-repeat: no-repeat;
@@ -25,12 +25,12 @@ h1, p, .reveal .slide ul, .reveal .slide ol {
   color: #ffffff;
   padding: 20px 60px;
   border-bottom:2px solid #fcba19;
-  background-image: url('/BC_HLTH_H_RGB_rev.png');
+  background-image: url('/style/BC_HLTH_H_RGB_rev.png');
   background-size: 180px auto;
   background-position: right 20px center;
   background-repeat: no-repeat;
 }
 
-.title {
-  padding: 5px 0px;
+.title h1 {
+  padding: 0px 5px;
 }

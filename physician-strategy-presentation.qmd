@@ -1,16 +1,17 @@
 ---
 format: 
   revealjs:
-    theme: mohtheme.scss
+    fontfamily: 'BC Sans'
+    theme: style/hsiaR_reveal_style.scss
     margin: 0
     center: false
     width: "100%"
     height: "100%"
-    lightbox: 
-      match: auto
-      effect: fade
-      desc-position: bottom
-      loop: false
+    lightbox:
+       match: auto
+       effect: fade
+       desc-position: bottom
+       loop: false
 ---
 
 # Physician Strategy

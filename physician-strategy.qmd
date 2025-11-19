@@ -4,7 +4,7 @@ author: "Tim H"
 date: today
 format: 
   html:
-    theme: mohtheme.scss
+    theme: style/hsiaR_html_style.scss
     fig-width: 8
     fig-height: 5.5
     fig-align: center
@@ -45,7 +45,6 @@ ggplot2::theme_set(
 
 ```{r}
 # con = hiConnect()
-
 ```
 
 ```{r}
