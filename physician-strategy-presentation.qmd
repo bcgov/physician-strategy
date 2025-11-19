@@ -2,6 +2,10 @@
 format: 
   revealjs:
     theme: mohtheme.scss
+    margin: 0
+    center: false
+    width: "100%"
+    height: "100%"
     lightbox: 
       match: auto
       effect: fade
@@ -12,84 +16,34 @@ format:
 # Physician Strategy
 
 
-```{r setup}
-# install packages
-pacman::p_load(tidyverse, hsiaR, patchwork)
-
-# ggplot theme
-ggplot2::theme_set(
-  ggthemes::theme_clean(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
-  )
-)
-```
-
-```{r}
-if (!fs::file_exists("data/cihi.rds")) {
-
-  cihi = readxl::read_excel(params$cihi_path, sheet="Table 1", range = "A3:BH84800") |>
-    rename_with(tolower) |>
-    rename_with(~str_remove_all(., "\\r|\\n|:")) |>
-    rename_with(~str_replace_all(., "/", " ")) |>
-    rename_with(~str_replace_all(., " ", "_")) |>
-    rename_with(~str_replace_all(., fixed("\u2013"), "-")) |> # replace en-dashes -- yes, it matters
-    rename(phys_pop_ratio = 'physician-to-100,000_population_ratio') |>
-    mutate(across(c("year", "specialty_sort", "statistics_canada_population", "net_migration_between_canadian_jurisdictions", starts_with(c("number", "age_group", "place_of", "university_of", "years_since"))), as.integer)) |>
-    mutate(across(c("phys_pop_ratio", starts_with(c("average", "median"))), as.double)) |>
-    mutate(across(c(jurisdiction, health_region, specialty), fct))
-
-  readr::write_rds(cihi, "data/cihi.rds")
-} else cihi = readr::read_rds("data/cihi.rds")
-```
-
 ## All Physicians (BC)
 
 :::: {.columns}
+
 ::: {.column width='40%'}
 - There are many physicians in British Columbia
 :::
 
 ::: {.column width='60%'}
-```{r}
-cihi |>
-  filter(
-    jurisdiction == 'B.C.',
-    health_region == 'B.C.',
-    specialty == "All physicians"
-) |>
-  ggplot(aes(x=year, y=number_of_physicians, color=jurisdiction)) +
-  geom_line() +
-  geom_point() +
-  scale_color_viridis_d() +
-  theme(legend.position = 'none') +
-  scale_y_continuous(labels = scales::label_comma()) +
-  ggtitle("Physicians in B.C.")
-```
+![](images/g1.png)
 :::
 ::::
 
 
 ## Canada
 
-```{r}
-good_provinces = c("Canada", "B.C.", "Alta.", "Ont.", "Man.")
+:::: {.columns}
 
-cihi |>
-  filter(
-    specialty == "All physicians",
-    #str_detect(jurisdiction, "Canada|\\.$") |>
-    health_region %in% good_provinces
-  ) |>
-  mutate(is_bc = health_region == 'B.C.') |>
-  mutate(is_bc_scale = case_when(is_bc ~ 2, T ~ 1)) |>
-  ggplot(aes(x=year, y=phys_pop_ratio, color=jurisdiction, size=is_bc_scale, linewidth=is_bc_scale)) +
-  geom_line() +
-  geom_point() +
-  scale_color_viridis_d() +
-  scale_y_continuous(labels = scales::label_comma()) +
-  guides(linewidth = 'none', size = 'none') +
-  ggtitle("Physicians per Pop - across Canada") +
-  theme(legend.position = 'bottom')
-```
+::: {.column width='40%'}
+- There are many physicians in British Columbia
+:::
+
+::: {.column width='60%'}
+![](images/g2.png)
+:::
+::::
+
+## Hello
+
+- hi
+- hey

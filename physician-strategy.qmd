@@ -78,6 +78,8 @@ cihi |>
   theme(legend.position = 'none') + 
   scale_y_continuous(labels = scales::label_comma()) +
   ggtitle("Physicians in B.C.")
+
+ggsave('images/g1.png')
 ```
 
 ```{r}
@@ -99,6 +101,8 @@ cihi |>
   guides(linewidth = 'none', size = 'none') +
   ggtitle("Physicians per Pop - across Canada") +
   theme(legend.position = 'bottom')
+
+ggsave('images/g2.png')
 ```
 
 ```{r}
@@ -149,6 +153,8 @@ g2 = df |>
   theme(legend.position = 'bottom')
 
 g1 + g2
+
+ggsave('images/g3.png')
 ```
 
 
@@ -174,5 +180,7 @@ cihi |>
   theme(legend.position = 'bottom') + 
   scale_y_continuous(labels = scales::label_percent()) +
   ggtitle("Gender Distribution")
+
+ggsave('images/g4.png')
 ```
 

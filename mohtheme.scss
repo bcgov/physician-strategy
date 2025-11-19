@@ -10,27 +10,28 @@ $body-color: #000000;
 $presentation-heading-font: "BC Sans";
 
 /*-- scss:rules --*/
-.reveal {
-  color: #000000 !important;
+.reveal .slide ul {
+  padding-left: .5em;
+}
+
+h1 {
+  padding-left: .5em;
 }
 
 .reveal .slide-background.title-slide {
   background-color: #003366 !important;
-  background-image: url('/www/bcstats_logo_rev.png') !important;
+  background-image: url('/bcstats_logo_rev.png') !important;
   background-size: 300px auto;
   background-position: right 20px bottom;
   background-repeat: no-repeat;
 }
 
-
 .reveal h2 {
   background-color: #003366;
   color: #ffffff;
   padding: 20px 60px;  // add horizontal padding for text
-  margin: 0;
-  width: 100%;
   border-bottom:2px solid #fcba19;
-  background-image: url('/www/bcstats_logo_rev.png');
+  background-image: url('/bcstats_logo_rev.png');
   background-size: 180px auto;
   background-position: right 20px center;
   background-repeat: no-repeat;
