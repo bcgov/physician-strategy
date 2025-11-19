@@ -1,13 +1,11 @@
 /*-- scss:defaults --*/
 
 // fonts
-$font-family-sans-serif: "BC Sans";
+$font-family-sans-serif: "BC Sans", sans-serif;
+$presentation-heading-font: "BC Sans", sans-serif;
 
 // colors
 $body-color: #000000;
-
-// headings
-$presentation-heading-font: "BC Sans";
 
 /*-- scss:rules --*/
 h1, p, .reveal .slide ul, .reveal .slide ol {
@@ -16,19 +14,23 @@ h1, p, .reveal .slide ul, .reveal .slide ol {
 
 .reveal .slide-background.title-slide {
   background-color: #003366 !important;
-  background-image: url('/bcstats_logo_rev.png') !important;
+  background-image: url('/BC_HLTH_H_RGB_rev.png') !important;
   background-size: 300px auto;
   background-position: right 20px bottom;
   background-repeat: no-repeat;
 }
 
-.reveal h2 {
+.reveal h2, .title {
   background-color: #003366;
   color: #ffffff;
-  padding: 20px 60px;  // add horizontal padding for text
+  padding: 20px 60px;
   border-bottom:2px solid #fcba19;
-  background-image: url('/bcstats_logo_rev.png');
+  background-image: url('/BC_HLTH_H_RGB_rev.png');
   background-size: 180px auto;
   background-position: right 20px center;
   background-repeat: no-repeat;
+}
+
+.title {
+  padding: 5px 0px;
 }

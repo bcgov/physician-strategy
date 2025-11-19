@@ -1,12 +1,14 @@
 ---
 title: "Physician Strategy"
 author: "Tim H"
+date: today
 format: 
   html:
-    fig-width: 8          # inches – wide enough for most dashboards
-    fig-height: 5.5       # inches – keeps a pleasant aspect ratio
+    theme: mohtheme.scss
+    fig-width: 8
+    fig-height: 5.5
     fig-align: center
-    fig-dpi: 150          # crisp on screen, still lightweight
+    fig-dpi: 150
     dev: svg  
     lightbox: 
       match: auto
@@ -24,8 +26,6 @@ execute:
   message: false
 params:
   use_rds: yes
-  lan_path: !expr fs::as_fs_path(Sys.getenv("LAN_path"))
-  cihi_path: data/cihi/supply-distribution-migration-physicians-in-canada-2001-2024-data-tables-en.xlsx
 ---
 
 ```{r setup}
@@ -34,10 +34,11 @@ pacman::p_load(tidyverse, hsiaR, patchwork, ggiraph)
 
 # ggplot theme
 ggplot2::theme_set(
-  ggthemes::theme_clean(base_size = 14) +
+  ggthemes::theme_clean(base_size = 14, base_family = "BC Sans") +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
+    plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt"),
+    
   )
 )
 ```
@@ -50,7 +51,7 @@ ggplot2::theme_set(
 ```{r}
 if (!fs::file_exists("data/cihi.rds") || !params$use_rds) {
 
-  cihi = readxl::read_excel(params$cihi_path, sheet="Table 1", range = "A3:BH84800") |>
+  cihi = readxl::read_excel(Sys.getenv("CIHI_PATH"), sheet="Table 1", range = "A3:BH84800") |>
     rename_with(tolower) |>
     rename_with(~str_remove_all(., "\\r|\\n|:")) |>
     rename_with(~str_replace_all(., "/", " ")) |> 
@@ -180,11 +181,10 @@ cihi |>
   ggplot(aes(x=year, y=value, color=name)) +
   geom_line() +
   geom_point() +
-  ggthemes::theme_clean() +
   scale_color_viridis_d() + 
   theme(legend.position = 'bottom') + 
   scale_y_continuous(labels = scales::label_percent()) +
-  ggtitle("Gender Distribution")
+  ggtitle("Gender Distribution") 
 
 ggsave('images/g4.png')
 ```
