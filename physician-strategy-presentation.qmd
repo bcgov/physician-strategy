@@ -115,7 +115,7 @@ cihi |>
   e_line(median_age) |>
   e_y_axis(median_age) |>
   e_title("Median Physician Age", "BC") |>
-  e_theme(sample(themes, 1)) |>
+#  e_theme(sample(themes, 1)) |>
   e_tooltip('axis') 
 ```
 :::
@@ -147,7 +147,7 @@ df |>
   e_chart(x=age_group) |>
   e_line(prop_phys) |>
   e_title("Relative Age Distribution by Year") |>
-  e_theme(sample(themes, 1)) |>
+#  e_theme(sample(themes, 1)) |>
   e_tooltip('axis') |>
   e_legend(right=0)
 ```
