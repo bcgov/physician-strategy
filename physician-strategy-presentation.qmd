@@ -12,10 +12,26 @@ format:
        effect: fade
        desc-position: bottom
        loop: false
+editor_options: 
+  chunk_output_type: console
 ---
 
-# Physician Strategy
+```{r}
+pacman::p_load(tidyverse, hsiaR, patchwork, echarts4r)
 
+cihi = readr::read_rds("rds/cihi.rds")
+
+e_common(font_family = "BC Sans", theme = sample(c("auritus", "azul", "bee-inspired", "blue", "caravan", "carp", "chalk", "cool",
+    "dark-blue", "dark-bold", "dark-digerati", "dark-fresh-cut", "dark-mushroom", "dark",
+    "eduardo", "essos", "forest", "fresh-cut", "fruit", "gray", "green", "halloween",
+    "helianthus", "infographic", "inspired", "jazz", "london", "macarons", "macarons2",
+    "mint", "purple-passion", "red-velvet", "red", "roma", "royal", "sakura", "shine",
+    "tech-blue", "vintage", "walden", "wef", "weforum", "westeros", "wonderland"), 1))
+```
+
+
+
+# Physician Strategy
 
 ## All Physicians (BC)
 
@@ -23,10 +39,24 @@ format:
 
 ::: {.column width='40%'}
 - There are many physicians in British Columbia
+- There are many physicians in British Columbia
+- There are many physicians in British Columbia
 :::
 
 ::: {.column width='60%'}
-![](images/g1.png)
+```{r}
+cihi |>
+  filter(
+    jurisdiction == 'B.C.',
+    health_region == 'B.C.',
+    specialty == "All physicians"
+) |>
+  mutate(year = fct(as.character(year))) |>
+  e_charts(x = year) |>
+  e_line(serie = number_of_physicians) |>
+  e_title("# Physicians", "BC") |>
+  e_tooltip('axis')
+```
 :::
 ::::
 
@@ -34,17 +64,119 @@ format:
 ## Canada
 
 :::: {.columns}
-
 ::: {.column width='40%'}
+- There are many physicians in British Columbia
+- There are many physicians in British Columbia
 - There are many physicians in British Columbia
 :::
 
 ::: {.column width='60%'}
-![](images/g2.png)
+```{r}
+good_provinces = c("Canada", "B.C.", "Alta.", "Ont.", "Man.")
+
+cihi |>
+  filter(
+    specialty == "All physicians",
+    #str_detect(jurisdiction, "Canada|\\.$") |>
+    health_region %in% good_provinces
+  ) |>
+  mutate(year = fct(as.character(year))) |>
+  # select(year, jurisdiction, phys_pop_ratio) |>
+  # pivot_wider(names_from = jurisdiction, values_from = phys_pop_ratio) |>
+  
+  #mutate(is_bc = health_region == 'B.C.') |>
+  #mutate(is_bc_scale = case_when(is_bc ~ 2, T ~ 1)) |>
+  group_by(jurisdiction) |>
+  e_charts(x = year) |>
+  #e_line(serie = phys_pop_ratio, lineStyle = list()) |>
+  #e_line(serie = phys_pop_ratio, lineStyle = list(width = ~is_bc_scale)) |>
+  e_line(serie = phys_pop_ratio, lineStyle = list(normal = list(width=10))) |>
+  e_title("# Physicians", "Canada/Provinces") |>
+  e_tooltip('axis') |>
+  e_theme("westeros") |>
+  e_y_axis(phys_pop_ratio, formatter = e_axis_formatter("decimal"), margin=30)
+```
 :::
 ::::
 
 ## Hello
 
-- hi
-- hey
+:::: {.columns}
+::: {.column width='50%'}
+```{r}
+cihi |>
+  filter(
+    jurisdiction == 'B.C.',
+    health_region == 'B.C.',
+    specialty == "All physicians"
+) |>
+  mutate(year = fct(as.character(year))) |>
+  e_chart(x=year) |>
+  e_line(median_age) |>
+  e_y_axis(median_age) |>
+  e_title("Median Physician Age", "BC") |>
+  e_theme(sample(themes, 1)) |>
+  e_tooltip('axis') 
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+df = cihi |>
+  filter(
+    jurisdiction == 'B.C.',
+    health_region == 'B.C.',
+    specialty == "All physicians",
+    year %in% c(2015, 2020, 2024)
+) |>
+  select(year, starts_with("age_group")) |>
+  rename("00-30" = age_group_younger_than_30, "80-100" = age_group_80_and_older) |>
+  select(-age_group_unknown) |>
+  pivot_longer(cols = 2:last_col()) |>
+  mutate(name = str_extract(name, "\\d\\d-\\d\\d")) |>
+  rename(age_group = name) |>
+  mutate(year = fct(as.character(year)))
+
+
+df |>
+  group_by(year) |>
+  summarise(total_pop = sum(value)) |>
+  inner_join(df) |>
+  mutate(prop_phys = value / total_pop) |>
+  group_by(year) |>
+  e_chart(x=age_group) |>
+  e_line(prop_phys) |>
+  e_title("Relative Age Distribution by Year") |>
+  e_theme(sample(themes, 1)) |>
+  e_tooltip('axis') |>
+  e_legend(right=0)
+```
+:::
+::::
+
+
+## Gender
+
+```{r}
+cihi |>
+  filter(
+    jurisdiction == 'B.C.',
+    health_region == 'B.C.',
+    specialty == "All physicians"
+) |>
+  select(year, number_of_physicians, number_female, number_male) |>
+  mutate(across(3:4, ~./number_of_physicians)) |>
+  rename_with(~str_replace_all(., "number", "prop"), 3:4) |>
+  select(year, starts_with("prop")) |>
+  pivot_longer(2:3) |>
+  mutate(name = str_remove(name, "prop_")) |>
+  mutate(year = fct(as.character(year))) |>
+  group_by(name) |>
+  e_chart(x=year) |>
+  e_line(value) |>
+  e_title("Gender Distribution") |>
+  e_y_axis(formatter = e_axis_formatter('percent')) |>
+  e_theme(sample(themes, 1)) |>
+  e_tooltip('axis')
+```
+

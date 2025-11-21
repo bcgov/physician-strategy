@@ -5,11 +5,12 @@ date: today
 format: 
   html:
     theme: style/hsiaR_html_style.scss
-    fig-width: 8
-    fig-height: 5.5
-    fig-align: center
-    fig-dpi: 150
-    dev: svg  
+    toc: true
+    # fig-width: 8
+    # fig-height: 5.5
+    # fig-align: center
+    # fig-dpi: 150
+    # dev: svg  
     lightbox: 
       match: auto
       effect: fade
@@ -24,31 +25,31 @@ execute:
   echo: false
   warning: false
   message: false
+  cache: true
 params:
   use_rds: yes
 ---
 
 ```{r setup}
 # install packages
-pacman::p_load(tidyverse, hsiaR, patchwork, ggiraph)
+pacman::p_load(tidyverse, hsiaR, patchwork)
 
 # ggplot theme
 ggplot2::theme_set(
-  ggthemes::theme_clean(base_size = 14, base_family = "BC Sans") +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt"),
-    
-  )
+  #ggthemes::theme_clean()
+  ggthemes::theme_clean(base_size = 14, base_family = "BC Sans")
+  # theme(
+  #   plot.title = element_text(face = "bold", hjust = 0.5),
+  #   plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt"),
+  # )
 )
+
+if (params$use_rds && !fs::dir_exists("rds")) fs::dir_create('rds')
+if (!params$use_rds) con = hiConnect()
 ```
 
 ```{r}
-# con = hiConnect()
-```
-
-```{r}
-if (!fs::file_exists("data/cihi.rds") || !params$use_rds) {
+if (!fs::file_exists("rds/cihi.rds") || !params$use_rds) {
 
   cihi = readxl::read_excel(Sys.getenv("CIHI_PATH"), sheet="Table 1", range = "A3:BH84800") |>
     rename_with(tolower) |>
@@ -61,30 +62,27 @@ if (!fs::file_exists("data/cihi.rds") || !params$use_rds) {
     mutate(across(c("phys_pop_ratio", starts_with(c("average", "median"))), as.double)) |> 
     mutate(across(c(jurisdiction, health_region, specialty), fct))
   
-  readr::write_rds(cihi, "data/cihi.rds")
-} else cihi = readr::read_rds("data/cihi.rds")
+  readr::write_rds(cihi, "rds/cihi.rds")
+} else cihi = readr::read_rds("rds/cihi.rds")
 ```
 
+## Physicians in BC
+
 ```{r}
-g = cihi |>
+cihi |>
   filter(
     jurisdiction == 'B.C.',
     health_region == 'B.C.',
     specialty == "All physicians"
 ) |>
   ggplot(aes(x=year, y=number_of_physicians, color=jurisdiction)) +
-  geom_line_interactive() +
-  geom_point_interactive(aes(data_id = year, tooltip = "year:" %,,% year %,% "\n# physicians:" %,,% number_of_physicians)) +
+  geom_line() +
+  geom_point() +
   scale_color_viridis_d() + 
   theme(legend.position = 'none') + 
   scale_y_continuous(labels = scales::label_comma()) +
   ggtitle("Physicians in B.C.")
-
-girafe(ggobj = g)
-
-ggsave('images/g1.png')
 ```
-
 
 
 ```{r}
@@ -106,8 +104,6 @@ cihi |>
   guides(linewidth = 'none', size = 'none') +
   ggtitle("Physicians per Pop - across Canada") +
   theme(legend.position = 'bottom')
-
-ggsave('images/g2.png')
 ```
 
 ```{r}
@@ -158,8 +154,6 @@ g2 = df |>
   theme(legend.position = 'bottom')
 
 g1 + g2
-
-ggsave('images/g3.png')
 ```
 
 
@@ -183,8 +177,6 @@ cihi |>
   scale_color_viridis_d() + 
   theme(legend.position = 'bottom') + 
   scale_y_continuous(labels = scales::label_percent()) +
-  ggtitle("Gender Distribution") 
-
-ggsave('images/g4.png')
+  ggtitle("Gender Distribution")
 ```
 
