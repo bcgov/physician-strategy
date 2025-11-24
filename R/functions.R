@@ -199,3 +199,62 @@ plot4 = function(data, type) {
       e_tooltip('axis')
   }
 }
+
+plot5 = function(data, type) {
+  df = data |>
+    select(year, jurisdiction, health_region, specialty, number_of_physicians) |>
+    filter(health_region == 'B.C.') |>
+    filter(str_detect(specialty, "^[_|All]", negate = T))
+  if (type == 'g') {
+    df |>
+      ggplot(aes(x=year, y=number_of_physicians, color=specialty)) +
+      geom_point() +
+      geom_line() +
+      scale_y_continuous(labels = scales::label_comma())
+
+  } else {
+    df |>
+      mutate(year = fct(as.character(year))) |>
+      group_by(specialty) |>
+      e_chart(x=year) |>
+      e_line(number_of_physicians) |>
+      e_title("number_of_physicians") |>
+      e_tooltip('axis') |>
+      e_legend_scroll()
+  }
+
+}
+
+make_milestones = function() {
+  tribble(~date, ~name, ~specialty, ~other,
+    "2023-02-01", "LFP", "Family medicine", NA_character_
+) |>
+    mutate(date = ymd(date))
+}
+
+
+
+df = cihi |>
+  select(year, jurisdiction, health_region, specialty, number_of_physicians) |>
+  filter(health_region == 'B.C.') |>
+  mutate(date = ymd(year %,% "-12-31")) |>   # you sure about this?
+  inner_join(milestones, by = join_by("specialty"), suffix = c("", "_milestone")) |>
+  select(-other) |>
+  mutate(before_milestone = as_factor(date < date_milestone)) |>
+  mutate(before_milestone = case_when(date < date_milestone ~ 0L, T ~ 1L)) |>
+  select(year, number_of_physicians, before_milestone) |>
+  as.data.frame()
+
+its.analysis::itsa.model(df, time = 'year', depvar = 'number_of_physicians', interrupt_var = 'before_milestone', alpha=.05)
+
+
+year <- c(2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+          2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018)
+depv <- c(8.22, 8.19, 8.23, 8.28, 8.32, 8.39, 8.02,
+          7.92, 7.62, 7.23, 7.1, 7.11, 6.95, 7.36, 7.51, 7.78, 7.92, 7.81)
+interruption <- c(0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0)
+cov1 <- c(3.1, 3.3, 5.1, 5.2, 5.4, 4.5, 4.7, 4.9, 5.3,
+          5.6, 5.8, 6.0, 4.8, 5.2, 4.5, 4.6, 5.1, 4.7)
+x <- as.data.frame(cbind(year, depv, interruption, cov1))
+its.analysis::itsa.model(data=x, time="year", depvar="depv", interrupt_var = "interruption",
+                         alpha=0.05, bootstrap=TRUE, Reps = 250)

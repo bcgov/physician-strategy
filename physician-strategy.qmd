@@ -6,7 +6,7 @@ format:
   html:
     theme: style/hsiaR_html_style.scss
     toc: true
-    # fig-width: 8
+    # fig-width: 10
     # fig-height: 5.5
     # fig-align: center
     # fig-dpi: 150
@@ -29,38 +29,37 @@ params:
   ggplot: no
 ---
 
-```{r setup}
-library(targets)
-invisible(extrafont::choose_font("BC Sans", quiet = T))
-extrafont::loadfonts()
+::: {.column-page}
 
-ggplot2::theme_set(ggthemes::theme_clean(base_family = "BC Sans"))
+```{r setup}
+pacman::p_load(targets, tarchetypes)
+# invisible(extrafont::choose_font("BC Sans", quiet = T))
+# extrafont::loadfonts()
+
+#ggplot2::theme_set(ggthemes::theme_clean(base_family = "BC Sans"))
+ggplot2::theme_set(ggthemes::theme_clean())
 echarts4r::e_common(font_family = "BC Sans", theme = "Westeros")
+
+print_graphs = function(n) paste0(if (params$ggplot) "g" else "e", n) |> tar_read_raw()
 ```
 
 ## Physicians in BC
 
-```{r}
-if (params$ggplot) tar_read(g1) else tar_read(e1)
-```
+`r print_graphs(1)`
 
 ## Physicians Comparison
 
-```{r}
-if (params$ggplot) tar_read(g2) else tar_read(e2)
-```
+`r print_graphs(2)`
 
 ## Physician Age
 
-```{r}
-#| column: page
-#| fig-width: 10
-
-if (params$ggplot) tar_read(g3) else tar_read(e3)
-```
+`r print_graphs(3)`
 
 ## Gender
 
-```{r}
-if (params$ggplot) tar_read(g4) else tar_read(e4)
-```
+`r print_graphs(4)`
+
+## Specialty
+
+`r print_graphs(5)`
+:::
