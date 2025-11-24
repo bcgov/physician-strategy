@@ -21,7 +21,7 @@ get_cihi_data = function(file = Sys.getenv("CIHI_PATH")) {
     mutate(across(c(jurisdiction, health_region, specialty), fct))
 }
 
-plot_1 = function(data, type) {
+plot1 = function(data, type) {
   df = data |>
     filter(
       jurisdiction == 'B.C.',
@@ -29,7 +29,7 @@ plot_1 = function(data, type) {
       specialty == "All physicians"
     )
 
-  if (type == 'gg') {
+  if (type == 'g') {
     df |>
       ggplot(aes(x=year, y=number_of_physicians, color=jurisdiction)) +
       geom_line() +
@@ -50,7 +50,7 @@ plot_1 = function(data, type) {
   }
 }
 
-plot_2 = function(data, type) {
+plot2 = function(data, type) {
   good_provinces = c("Canada", "B.C.", "Alta.", "Ont.", "Man.")
 
   df = data |>
@@ -59,7 +59,7 @@ plot_2 = function(data, type) {
       health_region %in% good_provinces
     )
 
-  if (type == 'gg') {
+  if (type == 'g') {
     df |>
       mutate(is_bc = health_region == 'B.C.') |>
       mutate(is_bc_scale = case_when(is_bc ~ 1.5, T ~ 1)) |>
@@ -85,7 +85,7 @@ plot_2 = function(data, type) {
   }
 }
 
-plot_3 = function(data, type) {
+plot3 = function(data, type) {
   df = data |>
     filter(
       jurisdiction == 'B.C.',
@@ -114,7 +114,7 @@ plot_3 = function(data, type) {
     mutate(prop_phys = value / total_pop) |>
     mutate(year = fct(as.character(year)))
 
-  if (type == 'gg') {
+  if (type == 'g') {
     g1 = df |>
       ggplot(aes(x=year, y=median_age)) +
       geom_line() +
@@ -163,7 +163,7 @@ plot_3 = function(data, type) {
   }
 }
 
-plot_4 = function(data, type) {
+plot4 = function(data, type) {
   df = data |>
     filter(
       jurisdiction == 'B.C.',
@@ -177,7 +177,7 @@ plot_4 = function(data, type) {
     pivot_longer(2:3) |>
     mutate(name = str_remove(name, "prop_"))
 
-  if (type == 'gg') {
+  if (type == 'g') {
     df |>
       ggplot(aes(x=year, y=value, color=name)) +
       geom_line() +

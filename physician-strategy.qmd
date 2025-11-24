@@ -26,7 +26,7 @@ execute:
   warning: false
   message: false
 params:
-  ggplot: yes
+  ggplot: no
 ---
 
 ```{r setup}
@@ -41,13 +41,13 @@ echarts4r::e_common(font_family = "BC Sans", theme = "Westeros")
 ## Physicians in BC
 
 ```{r}
-if (params$ggplot) tar_read(gg1) else tar_read(e1)
+if (params$ggplot) tar_read(g1) else tar_read(e1)
 ```
 
 ## Physicians Comparison
 
 ```{r}
-if (params$ggplot) tar_read(gg2) else tar_read(e2)
+if (params$ggplot) tar_read(g2) else tar_read(e2)
 ```
 
 ## Physician Age
@@ -56,11 +56,11 @@ if (params$ggplot) tar_read(gg2) else tar_read(e2)
 #| column: page
 #| fig-width: 10
 
-if (params$ggplot) tar_read(gg3) else tar_read(e3)
+if (params$ggplot) tar_read(g3) else tar_read(e3)
 ```
 
 ## Gender
 
 ```{r}
-if (params$ggplot) tar_read(gg4) else tar_read(e4)
+if (params$ggplot) tar_read(g4) else tar_read(e4)
 ```
