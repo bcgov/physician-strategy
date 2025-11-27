@@ -28,7 +28,7 @@ params:
 ---
 
 ```{r setup}
-pacman::p_load(targets, tarchetypes)
+pacman::p_load(targets, tarchetypes, hsiaR, tidyverse)
 # invisible(extrafont::choose_font("BC Sans", quiet = T))
 # extrafont::loadfonts()
 
@@ -49,30 +49,30 @@ Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapi
 
 ```{r}
 #| context: data
-c1 = tar_read(c1)
+tar_load(c(ui_1, g_1, e_1, cihi_data_1))
 ```
 
 ```{r}
 #| eval: !expr params$ggplot
-c1$g1
+g_1
 ```
 
 ```{r}
 #| eval: !expr params$echarts
-c1$e1
+e_1
 ```
 
 ```{r}
 #| eval: !expr params$shiny
 #| column: page
-c1$ui
+ui_1
 ```
 
 ```{r}
 #| eval: !expr params$shiny
 #| context: server
 
-output$p1 = renderPlot(c1$g(filter(c1$df, health_region %in% input$prov)))
+output$p1 = renderPlot(g_1_fn(filter(cihi_data_1, health_region %in% input$prov)))
 ```
 
 Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
