@@ -92,3 +92,8 @@ Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapi
 
 ## Specialty
 
+## Encounters
+
+Encounters data extracted `r fs::file_info("_targets/objects/encounters_raw")$modification_time |> format("%B %d, %Y")`.
+
+VT4 data extracted `r fs::file_info("_targets/objects/vt4_raw")$modification_time |> format("%B %d, %Y")`.

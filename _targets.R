@@ -9,7 +9,11 @@ targets = list(
   tar_target(cihi_data_1, prep_cihi_data_1(cihi)),
   tar_target(ui_1, make_ui_1(cihi_data_1)),
   tar_target(g_1, plot_g_1(cihi_data_1)),
-  tar_target(e_1, plot_e_1(cihi_data_1))
+  tar_target(e_1, plot_e_1(cihi_data_1)),
+
+  tar_target(encounters_raw, encounters_fn()),
+  tar_target(vt4_raw, vt4_fn())
+
   # tar_target(c1, prep_plots1(cihi))
   # tar_target(g1, plot1(cihi, 'g')),
   # tar_target(e1, plot1(cihi, 'e')),

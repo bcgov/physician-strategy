@@ -5,7 +5,7 @@
 # - do FPs switch out of hospitalism after LFP?
 
 
-pacman::p_load(tidyverse, echarts4r, bslib, shinyWidgets)
+pacman::p_load(tidyverse, echarts4r, bslib, shinyWidgets, hsiaR)
 
 ggpad = function(m=.1) scale_x_continuous(expand = expansion(mult = m))
 
@@ -364,3 +364,69 @@ plot_e_1 = function(data) {
 # ) |>
 #     mutate(date = ymd(date))
 # }
+
+
+
+
+encounters_fn = function() {
+  con = hiConnect()
+  query = sql("
+  SELECT pracnum, servdt, count(clnt_label) as msp_encounters
+  FROM (
+    SELECT distinct
+      clnt.mrg_clnt_anon_idnt_id as clnt_label,
+      msp.pracnum,
+      trunc(servdt) as servdt
+    FROM
+      ahip.AR_MSPCLM_CORE_CAN msp
+      left join AHIP.CB_DTL_DM_CLNT_VW clnt ON clnt.label = msp.clnt_label
+      left join MSEA_TEAM_LVL2.LAB_PROVIDER lab ON msp.payenum=LPAD(lab.payenum, 5, '0')
+      left join ahip.cb_dtl_dm_srv_date_vw dt ON msp.servdt = dt.srv_date
+      left join ahip.fitmds fitm on msp.fitm=fitm.fitm
+    WHERE
+      pracnum is not null and
+      (clmtp in ('MM','MA','MB','MH','MN','MS','PM') or (servcd=13 and clmtp = 'PB')) AND
+      msp.fitm not in (15501,15601) and
+      (
+        (PAYESTAT IN ('Y','F')  AND (ENCTR_CLM_MSPD IS NOT NULL OR (ENCTR_CLM_MSPD IS NULL AND PAIDSERV >0) ))
+        OR (PAYESTAT NOT IN ('Y','F')  AND PAIDSERV >0)
+      ) AND
+      to_number(to_char(servdt,'YYYY'))>2009 and
+
+      /* Remove lab services of lab providers*/
+      not (
+        lab.payenum is not null and ((servcd = 93 and payestat in ('C', 'H', 'L')) or (servcd = 94 and msp.fitm <> 90665) or (servcd = 94 and msp.fitm = 90665 and payestat in ('C', 'H', 'L')) or (servcd = 98 and msp.fitm in (00012,90000) and payestat in ('C', 'H', 'L')))
+      ) and
+      /* Remove registration and 15min codes*/
+      NOT(
+        fitmdesc like '%15 MIN%' or
+        fitmdesc like '%INCENTIVE%' or
+        fitmdesc like '%PCN PANEL%' or
+        fitmdesc like '%PRIMARY CARE PANE%' or
+        fitmdesc like '%PCN ATTACH%' or
+        fitmdesc like '%PCN DETACH%' or
+        fitmdesc like '%PCN PANEL%' or
+        fitmdesc like '%MANAGEMENT FEE%' or
+        fitmdesc like '%CARE TIME%' or
+        fitmdesc like '%ENROLMENT CODE%' or
+        fitmdesc like '%REGISTRATION CODE%' OR
+        fitmdesc like '%TRANSITION CODE%'  OR
+        fitmdesc like '%PREMIUM%' OR
+        fitmdesc like '%SURCHARGE%'
+      ) and
+      /* Remove opioid management*/
+      msp.fitm<>39 and
+      NOT servcd in (12,17,9,19,29,49,71) and
+      msp.fitm not in (98111,98112)
+  )
+    GROUP BY pracnum, servdt
+    ORDER BY 1,2
+  ")
+  hiQuery(query, con=con)
+}
+
+
+vt4_fn = function() {
+  con = hiConnect()
+  hiQuery("select * from msea_team_lvl2.vt4", con=con)
+}
