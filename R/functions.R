@@ -1,3 +1,5 @@
+pacman::p_load(tidyverse, echarts4r, bslib, shinyWidgets)
+
 # setup_fn = function() {
 #   invisible(extrafont::choose_font("BC Sans", quiet = T))
 #   extrafont::loadfonts()
@@ -21,21 +23,50 @@ get_cihi_data = function(file = Sys.getenv("CIHI_PATH")) {
     mutate(across(c(jurisdiction, health_region, specialty), fct))
 }
 
-plot1 = function(data, type) {
+prep_plots1 = function(data) {
+  default_provinces = c("B.C.", "Alta.", "Ont.", "Man.")
+
   df = data |>
     filter(
-      jurisdiction == 'B.C.',
-      health_region == 'B.C.',
-      specialty == "All physicians"
+      specialty == "All physicians",
+      as.character(jurisdiction) == as.character(health_region),
+      jurisdiction != 'Canada'
     )
 
+  all_provinces = unique(df$jurisdiction)
+
+  ui = bslib::page_fluid(
+    virtualSelectInput("prov", "Prov?", choices = all_provinces, multiple = T, selected = "B.C."),
+    card(plotOutput("p1"), full_screen = T)
+  )
+
+  g = function(data) data |>
+    ggplot() +
+    aes(x=year, y=number_of_physicians, color=jurisdiction) +
+    scale_color_viridis_d() +
+    scale_y_continuous(labels = scales::label_comma()) +
+    ggtitle("Physicians") +
+    ggpad() +
+    geom_line() +
+    geom_point()
+
+  g1 = g(filter(df, jurisdiction %in% default_provinces))
+
+  e1 = filter(df, jurisdiction %in% default_provinces) |>
+    mutate(year = fct(as.character(year))) |>
+    group_by(jurisdiction) |>
+    e_charts(x = year) |>
+    e_line(number_of_physicians) |>
+    e_title("# Physicians") |>
+    e_tooltip('axis')
+
+  list(df=df, ui=ui, g=g, g1=g1, e1=e1)
+}
+
+plot1 = function(data, type) {
   if (type == 'g') {
-    df |>
-      ggplot(aes(x=year, y=number_of_physicians, color=jurisdiction)) +
-      geom_line() +
-      geom_point() +
+    ggplot() +
       scale_color_viridis_d() +
-      theme(legend.position = 'none') +
       scale_y_continuous(labels = scales::label_comma()) +
       ggtitle("Physicians in B.C.") +
       ggpad()
@@ -49,6 +80,51 @@ plot1 = function(data, type) {
       e_y_axis(number_of_physicians)
   }
 }
+
+print_server_2 = function(data) {
+  print(data)
+  data |>
+    mutate(is_bc = health_region == 'B.C.') |>
+    mutate(is_bc_scale = case_when(is_bc ~ 1.5, T ~ 1)) |>
+    ggplot(aes(x=year, y=phys_pop_ratio, color=jurisdiction, linewidth=is_bc_scale)) +
+    geom_line() +
+    geom_point() +
+    scale_color_viridis_d() +
+    scale_y_continuous(labels = scales::label_comma()) +
+    guides(linewidth = 'none', size = 'none') +
+    ggtitle("Physicians per Pop - across Canada") +
+    theme(legend.position = 'bottom') +
+    ggpad()
+}
+
+print_ui5 = function(data) {
+  specialties = data |>
+    select(year, jurisdiction, health_region, specialty, number_of_physicians) |>
+    filter(health_region == 'B.C.') |>
+    #filter(str_detect(specialty, "^[_|All]", negate = T))
+    pull(specialty) |>
+    unique() |>
+    sort()
+
+  page_sidebar(
+    sidebar = sidebar(
+      virtualSelectInput("specs", "Spec?", choices = specialties, multiple = T, selected = "Family medicine")
+    ),
+    card(
+      plotOutput("p5"), full_screen = T
+    )
+  )
+}
+
+# print_server_5 = function(data) {
+#   data |>
+#     ggplot(aes(x=year, y=number_of_physicians, color=specialty)) +
+#     geom_point() +
+#     geom_line() +
+#     scale_y_continuous(labels = scales::label_comma())
+# }
+
+
 
 plot2 = function(data, type) {
   good_provinces = c("Canada", "B.C.", "Alta.", "Ont.", "Man.")
@@ -231,30 +307,3 @@ make_milestones = function() {
 ) |>
     mutate(date = ymd(date))
 }
-
-
-
-df = cihi |>
-  select(year, jurisdiction, health_region, specialty, number_of_physicians) |>
-  filter(health_region == 'B.C.') |>
-  mutate(date = ymd(year %,% "-12-31")) |>   # you sure about this?
-  inner_join(milestones, by = join_by("specialty"), suffix = c("", "_milestone")) |>
-  select(-other) |>
-  mutate(before_milestone = as_factor(date < date_milestone)) |>
-  mutate(before_milestone = case_when(date < date_milestone ~ 0L, T ~ 1L)) |>
-  select(year, number_of_physicians, before_milestone) |>
-  as.data.frame()
-
-its.analysis::itsa.model(df, time = 'year', depvar = 'number_of_physicians', interrupt_var = 'before_milestone', alpha=.05)
-
-
-year <- c(2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-          2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018)
-depv <- c(8.22, 8.19, 8.23, 8.28, 8.32, 8.39, 8.02,
-          7.92, 7.62, 7.23, 7.1, 7.11, 6.95, 7.36, 7.51, 7.78, 7.92, 7.81)
-interruption <- c(0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0)
-cov1 <- c(3.1, 3.3, 5.1, 5.2, 5.4, 4.5, 4.7, 4.9, 5.3,
-          5.6, 5.8, 6.0, 4.8, 5.2, 4.5, 4.6, 5.1, 4.7)
-x <- as.data.frame(cbind(year, depv, interruption, cov1))
-its.analysis::itsa.model(data=x, time="year", depvar="depv", interrupt_var = "interruption",
-                         alpha=0.05, bootstrap=TRUE, Reps = 250)

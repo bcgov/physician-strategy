@@ -1,0 +1,37 @@
+/*-- scss:defaults --*/
+@font-face {
+  font-family: 'BC Sans';
+  src: url('BCSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('BCSans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+// fonts
+$font-family-sans-serif: "BC Sans", sans-serif;
+$presentation-heading-font: "BC Sans", sans-serif;
+
+// colors
+$body-color: #000000;
+
+/*-- scss:rules --*/
+h1 {
+  font-family: "BC Sans" !important;
+  font-weight: 700 !important;
+  background-color: #003366 !important;
+  color: #ffffff !important;
+  padding: 20px 60px !important;
+  border-bottom:2px solid #fcba19 !important;
+  background-image: url('BC_HLTH_H_RGB_rev.png');
+  background-size: 180px auto !important;
+  background-position: right 20px center !important;
+  background-repeat: no-repeat !important;
+}
+
+h2, p {font-family: "BC Sans" !important;}

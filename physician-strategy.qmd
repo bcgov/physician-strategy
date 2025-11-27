@@ -2,21 +2,17 @@
 title: "Physician Strategy"
 author: "Tim H"
 date: today
+server: shiny
+fontfamily: "BC Sans"
 format: 
   html:
-    theme: style/hsiaR_html_style.scss
+    theme: hsiaR_html_style.scss
     toc: true
-    # fig-width: 10
-    # fig-height: 5.5
-    # fig-align: center
-    # fig-dpi: 150
-    # dev: svg  
     lightbox: 
       match: auto
       effect: fade
       desc-position: bottom
       loop: false
-    # include-after-body: _fullscreen-button.html
 bibliography: 
   - references.bib
 editor_options: 
@@ -26,10 +22,10 @@ execute:
   warning: false
   message: false
 params:
-  ggplot: no
+  ggplot: yes
+  echarts: yes
+  shiny: yes
 ---
-
-::: {.column-page}
 
 ```{r setup}
 pacman::p_load(targets, tarchetypes)
@@ -41,25 +37,58 @@ ggplot2::theme_set(ggthemes::theme_clean())
 echarts4r::e_common(font_family = "BC Sans", theme = "Westeros")
 
 print_graphs = function(n) paste0(if (params$ggplot) "g" else "e", n) |> tar_read_raw()
+
+source("R/functions.R")
 ```
 
-## Physicians in BC
+## Physicians in Canada
 
-`r print_graphs(1)`
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
+
+```{r}
+#| context: data
+c1 = tar_read(c1)
+```
+
+```{r}
+#| eval: !expr params$ggplot
+c1$g1
+```
+
+```{r}
+#| eval: !expr params$echarts
+c1$e1
+```
+
+```{r}
+#| eval: !expr params$shiny
+#| column: page
+c1$ui
+```
+
+```{r}
+#| eval: !expr params$shiny
+#| context: server
+
+output$p1 = renderPlot(c1$g(filter(c1$df, health_region %in% input$prov)))
+```
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
 
 ## Physicians Comparison
 
-`r print_graphs(2)`
 
 ## Physician Age
 
-`r print_graphs(3)`
 
 ## Gender
 
-`r print_graphs(4)`
 
 ## Specialty
 
-`r print_graphs(5)`
-:::
