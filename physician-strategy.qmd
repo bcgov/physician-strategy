@@ -51,7 +51,7 @@ Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapi
 
 ```{r}
 #| context: data
-tar_load_everything()
+tar_load(c(g_1, e_1, ui_1, policy_dates, encounters_fps))
 ```
 
 ```{r}
@@ -71,7 +71,7 @@ ui_1
 ```
 
 ```{r}
-#| eval: !expr params$shiny
+#| eval: false
 #| context: server
 
 output$p1 = renderPlot(g_1_fn(filter(cihi_data_1, health_region %in% input$prov)))
