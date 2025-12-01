@@ -425,8 +425,49 @@ encounters_fn = function() {
   hiQuery(query, con=con)
 }
 
-
 vt4_fn = function() {
   con = hiConnect()
   hiQuery("select * from msea_team_lvl2.vt4", con=con)
 }
+
+get_fiscal_year <- function(date, fiscal_start_month = 4) {
+  date <- as.Date(date)
+  year <- lubridate::year(date)
+  month <- lubridate::month(date)
+
+  fiscal_year <- year - (month < fiscal_start_month)
+  paste0(fiscal_year, "/", fiscal_year + 1)
+}
+
+make_fiscal_year_lookup_table = function(dates) {
+  dates_uq = sort(unique(as.Date(dates)))
+  tibble(date = dates_uq, fiscal = get_fiscal_year(date))
+}
+
+clean_encounters = function(encounters_raw) {
+  x = make_fiscal_year_lookup_table(encounters_raw$servdt)
+  encounters_raw |>
+    mutate(msp_encounters = as.integer(msp_encounters)) |>
+    mutate(servdt = as.Date(servdt)) |>
+    inner_join(x, by=join_by(servdt == date))
+}
+
+clean_vt4 = function(vt4_raw) {
+  vt4_raw |>
+    mutate(across(c(funcspec, prac_age, ha_cd, hsda_cd, lha_cd, chsa_cd), as.integer))
+}
+
+get_encounters_fps = function(encounters, vt4, policy_dates) {
+  fp_specs = policy_dates |>
+    filter(anything_else == "Family medicine") |>
+    pull(specs) |>
+    first()
+
+  vt4_fps = vt4 |>
+    filter(funcspec %in% fp_specs) |>
+    select(pracnum, fiscal, funcspec, ha_cd, prac_age, prac_gender, all_source_pd)
+
+  inner_join(encounters, vt4_fps, by=join_by(pracnum, fiscal)) |>
+    mutate(is_treated = between(servdt, policy_dates$start_date, policy_dates$end_date))
+}
+

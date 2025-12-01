@@ -24,13 +24,15 @@ execute:
 params:
   ggplot: yes
   echarts: yes
-  shiny: yes
+  shiny: no
 ---
 
 ```{r setup}
 pacman::p_load(targets, tarchetypes, hsiaR, tidyverse)
 # invisible(extrafont::choose_font("BC Sans", quiet = T))
 # extrafont::loadfonts()
+
+if (!exists("params")) params = list(ggplot = T, echarts = F, shiny = F)
 
 #ggplot2::theme_set(ggthemes::theme_clean(base_family = "BC Sans"))
 ggplot2::theme_set(ggthemes::theme_clean())
@@ -49,7 +51,7 @@ Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapi
 
 ```{r}
 #| context: data
-tar_load(c(ui_1, g_1, e_1, cihi_data_1))
+tar_load_everything()
 ```
 
 ```{r}
@@ -97,3 +99,98 @@ Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapi
 Encounters data extracted `r fs::file_info("_targets/objects/encounters_raw")$modification_time |> format("%B %d, %Y")`.
 
 VT4 data extracted `r fs::file_info("_targets/objects/vt4_raw")$modification_time |> format("%B %d, %Y")`.
+
+### FPs
+
+```{r}
+encounters_fps |>
+  group_by(is_treated) |>
+  summarise(msp_encounters = mean(msp_encounters))
+```
+
+```{r}
+plus_minus = 365*2
+
+encounters_fps |>
+  filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus)) |>
+  #mutate(ym = paste0(year(servdt), "/", month(servdt))) |>
+  mutate(yearmon = zoo::as.yearmon(servdt)) |>
+  group_by(yearmon, is_treated) |>
+  summarise(msp_encounters = mean(msp_encounters)) |>
+  ungroup() |>
+  filter(yearmon < "Feb 2024") |>
+  ggplot() +
+  aes(x=yearmon, y=msp_encounters) +
+  geom_line() +
+  geom_point() +
+  geom_smooth(se = F, aes(color=is_treated)) +
+  geom_vline(xintercept = zoo::as.yearmon(policy_dates$start_date), color='red', linetype = 'dashed') +
+  ggthemes::theme_clean() +
+  scale_color_viridis_d()
+```
+
+```{r}
+encounters_fps |>
+  filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus)) |>
+  mutate(yearmon = zoo::as.yearmon(servdt)) |>
+  group_by(yearmon, is_treated) |>
+  summarise(n_pracs = n_distinct(pracnum)) |>
+  ungroup() |>
+  filter(yearmon < "Feb 2024") |>
+  ggplot() +
+  aes(x=yearmon, y=n_pracs) +
+  geom_line() +
+  geom_point() +
+  geom_smooth(method = 'lm', se = F, aes(color=is_treated)) +
+  geom_vline(xintercept = zoo::as.yearmon(policy_dates$start_date), color='red', linetype = 'dashed') +
+  ggthemes::theme_clean() +
+  scale_color_viridis_d()
+```
+
+```{r}
+encounters_fps |>
+  filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus)) |>
+  mutate(yearmon = zoo::as.yearmon(servdt)) |>
+  group_by(yearmon, is_treated, pracnum) |>
+  summarise(all_source_pd = sum(all_source_pd)) |>
+  group_by(yearmon, is_treated) |>
+  summarise(all_source_pd = mean(all_source_pd)) |>
+  ungroup() |>
+  filter(yearmon < "Feb 2024") |>
+  ggplot() +
+  aes(x=yearmon, y=all_source_pd) +
+  geom_line() +
+  geom_point() +
+  geom_smooth(method = 'lm', se = F, aes(color=is_treated)) +
+  geom_vline(xintercept = zoo::as.yearmon(policy_dates$start_date), color='red', linetype = 'dashed') +
+  ggthemes::theme_clean() +
+  scale_color_viridis_d() +
+  scale_y_continuous(labels = scales::dollar_format())
+```
+
+
+```{r}
+encounters_fps |>
+  filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus)) |>
+  mutate(yearmon = zoo::as.yearmon(servdt)) |>
+  # group_by(yearmon, is_treated, pracnum) |>
+  # summarise(
+  #   all_source_pd = sum(all_source_pd),
+  #   encounters = sum(encounters)
+  # ) |>
+  group_by(yearmon, is_treated) |>
+  summarise(pd_amt_per_enc = sum(all_source_pd) / sum(encounters)) |>
+  ungroup() |>
+  filter(yearmon < "Feb 2024") |>
+  ggplot() +
+  aes(x=yearmon, y=pd_amt_per_enc) +
+  geom_line() +
+  geom_point() +
+  geom_smooth(method = 'lm', se = F, aes(color=is_treated)) +
+  geom_vline(xintercept = zoo::as.yearmon(policy_dates$start_date), color='red', linetype = 'dashed') +
+  ggthemes::theme_clean() +
+  scale_color_viridis_d() +
+  scale_y_continuous(labels = scales::dollar_format())
+```
+
+
