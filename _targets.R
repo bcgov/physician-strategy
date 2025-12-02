@@ -20,8 +20,3 @@ list(
   tar_target(encounters_fps, get_encounters_fps(encounters, vt4, policy_dates))
 
 )
-
-
-# tar_make in the background?
-# px = tar_make(callr_function = callr::r_bg)
-# tar_watch()

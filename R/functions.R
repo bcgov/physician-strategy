@@ -5,7 +5,7 @@
 # - do FPs switch out of hospitalism after LFP?
 
 
-pacman::p_load(tidyverse, echarts4r, bslib, shinyWidgets, hsiaR)
+pacman::p_load(tidyverse, echarts4r, bslib, shinyWidgets, hsiaR, zoo)
 
 ggpad = function(m=.1) scale_x_continuous(expand = expansion(mult = m))
 
@@ -446,15 +446,37 @@ make_fiscal_year_lookup_table = function(dates) {
 
 clean_encounters = function(encounters_raw) {
   x = make_fiscal_year_lookup_table(encounters_raw$servdt)
-  encounters_raw |>
+
+  df = encounters_raw |>
     mutate(msp_encounters = as.integer(msp_encounters)) |>
     mutate(servdt = as.Date(servdt)) |>
+    mutate(yearmon = as.yearmon(servdt)) |>
     inner_join(x, by=join_by(servdt == date))
+
+  p = df |>
+    group_by(yearmon) |>
+    summarise(msp_encounters = sum(msp_encounters)) |>
+    ungroup() |>
+    mutate(z = (msp_encounters - mean(msp_encounters)) / sd(msp_encounters)) # z-score
+
+  # We can see that the final month is incomplete so we'll dump it
+  #ggplot(p, aes(yearmon, z)) + geom_line()
+  #ggplot(p, aes(x=z)) + geom_histogram()
+
+  r = p |>
+    filter(abs(z) < 3) |>
+    select(yearmon)
+
+  # check for no missing dates
+  stopifnot(diff(r$yearmon) |> round(digits = 12) |> unique() |> length() == 1)
+
+  inner_join(df, r)
 }
 
 clean_vt4 = function(vt4_raw) {
+  # maybe make these guys factors cuz that's what they are....
   vt4_raw |>
-    mutate(across(c(funcspec, prac_age, ha_cd, hsda_cd, lha_cd, chsa_cd), as.integer))
+    mutate(across(c(funcspec, prac_age, ha_cd, hsda_cd, lha_cd, chsa_cd)), as.integer)
 }
 
 get_encounters_fps = function(encounters, vt4, policy_dates) {
@@ -471,3 +493,27 @@ get_encounters_fps = function(encounters, vt4, policy_dates) {
     mutate(is_treated = between(servdt, policy_dates$start_date, policy_dates$end_date))
 }
 
+plot_LFP_encounters = function(df = encounters_LFP, group_vars = c("yearmon", "is_treated"), value = "msp_encounters", .f = sum, include_geom_smooth = T) {
+
+  group_vars = syms(group_vars)
+  value = sym(value)
+
+  #browser()
+
+  g = df |>
+    group_by(!!!group_vars) |>
+    summarise(!!value := .f(!!value)) |>
+    ungroup() |>
+    ggplot() +
+    aes(x=yearmon, y=!!value, color=is_treated) +
+    geom_line() +
+    geom_point() +
+    #geom_smooth(method = 'lm', se = F, aes(color=is_treated)) +
+    geom_vline(xintercept = zoo::as.yearmon(LFP$start_date), color='red', linetype = 'dashed') +
+    ggthemes::theme_clean() +
+    scale_color_viridis_d() +
+    theme(legend.position = 'none') +
+    labs(x='month')
+
+  if (include_geom_smooth) g + geom_smooth(method = 'lm', se = F, linetype = 'dashed', linewidth = .5) else g
+}

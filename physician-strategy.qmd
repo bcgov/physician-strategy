@@ -18,13 +18,14 @@ bibliography:
 editor_options: 
   chunk_output_type: console
 execute: 
-  echo: false
+  echo: fenced
   warning: false
   message: false
 params:
   ggplot: yes
   echarts: yes
   shiny: no
+  plus_minus: !expr 365*2
 ---
 
 ```{r setup}
@@ -51,7 +52,7 @@ Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapi
 
 ```{r}
 #| context: data
-tar_load(c(g_1, e_1, ui_1, policy_dates, encounters_fps))
+tar_load(c(g_1, e_1, ui_1))
 ```
 
 ```{r}
@@ -103,94 +104,120 @@ VT4 data extracted `r fs::file_info("_targets/objects/vt4_raw")$modification_tim
 ### FPs
 
 ```{r}
-encounters_fps |>
+tar_load(c(policy_dates, encounters_fps))
+LFP = policy_dates |> filter(anything_else == 'Family medicine')
+encounters_LFP = encounters_fps |> 
+  filter(between(servdt, policy_dates$start_date - params$plus_minus, policy_dates$start_date + params$plus_minus))
+```
+
+```{r}
+n_days = encounters_fps |>
+  group_by(is_treated) |>
+  summarise(n_days = n_distinct(servdt))
+
+# 425 'treated' days, 4689 'untreated'
+
+plus_minus = n_days[[2,2]]
+
+encounters_pm = encounters_fps |> 
+  filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus))
+```
+
+
+```{r}
+#| eval: false
+
+# quick sanity check
+encounters_pm |>
+  group_by(yearmon) |>
+  summarise(msp_encounters = sum(msp_encounters)) |>
+  ungroup() |>
+  ggplot(aes(x=yearmon, y=msp_encounters)) +
+  geom_line() +
+  geom_vline(xintercept = as.yearmon(LFP$start_date), color='red', linetype = 'dashed') +
+  ggthemes::theme_clean() +
+  scale_color_viridis_d()
+```
+
+
+```{r}
+# mean encounters per day
+
+encounters_LFP |>
   group_by(is_treated) |>
   summarise(msp_encounters = mean(msp_encounters))
 ```
 
 ```{r}
-plus_minus = 365*2
-
-encounters_fps |>
-  filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus)) |>
-  #mutate(ym = paste0(year(servdt), "/", month(servdt))) |>
-  mutate(yearmon = zoo::as.yearmon(servdt)) |>
-  group_by(yearmon, is_treated) |>
-  summarise(msp_encounters = mean(msp_encounters)) |>
-  ungroup() |>
-  filter(yearmon < "Feb 2024") |>
-  ggplot() +
-  aes(x=yearmon, y=msp_encounters) +
-  geom_line() +
-  geom_point() +
-  geom_smooth(se = F, aes(color=is_treated)) +
-  geom_vline(xintercept = zoo::as.yearmon(policy_dates$start_date), color='red', linetype = 'dashed') +
-  ggthemes::theme_clean() +
-  scale_color_viridis_d()
+plot_LFP_encounters(encounters_LFP, value = "msp_encounters", .f = sum) +
+  ggtitle("Total MSP Encounters by Month") +
+  scale_y_continuous(labels = scales::label_comma())
 ```
 
 ```{r}
-encounters_fps |>
-  filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus)) |>
-  mutate(yearmon = zoo::as.yearmon(servdt)) |>
-  group_by(yearmon, is_treated) |>
-  summarise(n_pracs = n_distinct(pracnum)) |>
-  ungroup() |>
-  filter(yearmon < "Feb 2024") |>
-  ggplot() +
-  aes(x=yearmon, y=n_pracs) +
-  geom_line() +
-  geom_point() +
-  geom_smooth(method = 'lm', se = F, aes(color=is_treated)) +
-  geom_vline(xintercept = zoo::as.yearmon(policy_dates$start_date), color='red', linetype = 'dashed') +
-  ggthemes::theme_clean() +
-  scale_color_viridis_d()
+plot_LFP_encounters(encounters_LFP, value = "msp_encounters", .f = mean) +
+  ggtitle("Mean MSP Encounters by Month") +
+  scale_y_continuous(labels = scales::label_comma()) +
+  labs(y='mean # msp encounters per prac')
 ```
 
 ```{r}
-encounters_fps |>
-  filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus)) |>
-  mutate(yearmon = zoo::as.yearmon(servdt)) |>
+plot_LFP_encounters(encounters_LFP, value = "pracnum", .f = n_distinct) +
+  ggtitle("# distinct FP pracs per month") +
+  scale_y_continuous(labels = scales::label_comma())
+```
+
+```{r}
+encounters_LFP |>
   group_by(yearmon, is_treated, pracnum) |>
-  summarise(all_source_pd = sum(all_source_pd)) |>
+  summarise(all_source_pd = sum(all_source_pd) / 10^6) |>
+  plot_LFP_encounters(group_vars = c("yearmon", "is_treated"), value = "all_source_pd", .f = mean) +
+  ggtitle("Average All Source PD per prac") +
+  scale_y_continuous(labels = scales::label_dollar(accuracy = .1, suffix = "M"))
+```
+
+```{r}
+encounters_LFP |>
   group_by(yearmon, is_treated) |>
-  summarise(all_source_pd = mean(all_source_pd)) |>
+  summarise(all_source_pd = sum(all_source_pd), msp_encounters = sum(msp_encounters)) |>
   ungroup() |>
-  filter(yearmon < "Feb 2024") |>
-  ggplot() +
-  aes(x=yearmon, y=all_source_pd) +
-  geom_line() +
-  geom_point() +
-  geom_smooth(method = 'lm', se = F, aes(color=is_treated)) +
-  geom_vline(xintercept = zoo::as.yearmon(policy_dates$start_date), color='red', linetype = 'dashed') +
+  mutate(pd_per_enc = all_source_pd / msp_encounters) |>
+  plot_LFP_encounters(group_vars = c("yearmon", "is_treated"), value = "pd_per_enc", .f = sum) +
+  ggtitle("Sum All Source PD per encounter", "LFP increased all source pd by XXX") +
+  scale_y_continuous(labels = scales::label_dollar(accuracy = 1))
+```
+
+### T Tests
+
+```{r}
+enc_per_day = encounters_pm |>
+  filter(between(servdt, policy_dates$start_date - 365/2, policy_dates$start_date + 365/2)) |>
+  group_by(is_treated, pracnum) |>
+  summarise(msp_encounters = mean(msp_encounters)) |>
+  ungroup()
+```
+
+```{r}
+enc_per_day |>
+  ggplot(aes(x=is_treated, y=msp_encounters, color=is_treated)) +
+  geom_jitter(alpha=.5) +
+  stat_summary(fun = mean, geom = 'point', aes(group=1), color='red') +
+  stat_summary(fun = mean, geom = 'line', aes(group=1), color='red') +
   ggthemes::theme_clean() +
   scale_color_viridis_d() +
-  scale_y_continuous(labels = scales::dollar_format())
+  ggtitle("Average Encounters per day")
 ```
 
 
 ```{r}
-encounters_fps |>
-  filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus)) |>
-  mutate(yearmon = zoo::as.yearmon(servdt)) |>
-  # group_by(yearmon, is_treated, pracnum) |>
-  # summarise(
-  #   all_source_pd = sum(all_source_pd),
-  #   encounters = sum(encounters)
-  # ) |>
-  group_by(yearmon, is_treated) |>
-  summarise(pd_amt_per_enc = sum(all_source_pd) / sum(encounters)) |>
-  ungroup() |>
-  filter(yearmon < "Feb 2024") |>
-  ggplot() +
-  aes(x=yearmon, y=pd_amt_per_enc) +
-  geom_line() +
-  geom_point() +
-  geom_smooth(method = 'lm', se = F, aes(color=is_treated)) +
-  geom_vline(xintercept = zoo::as.yearmon(policy_dates$start_date), color='red', linetype = 'dashed') +
+enc_per_day |>
+  ggplot(aes(x=msp_encounters, color=is_treated)) +
+  geom_density() +
   ggthemes::theme_clean() +
-  scale_color_viridis_d() +
-  scale_y_continuous(labels = scales::dollar_format())
+  ggtitle("Sure ain't normally distributed")
 ```
 
+```{r}
+t.test(msp_encounters ~ is_treated, data = enc_per_day) # rejected!
+```
 
