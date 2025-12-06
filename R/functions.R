@@ -22,24 +22,15 @@ get_cihi_data = function(file = Sys.getenv("CIHI_PATH")) {
     mutate(across(c(jurisdiction, health_region, specialty), fct))
 }
 
-get_fiscal_year <- function(date, fiscal_start_month = 4) {
-  date <- as.Date(date)
-  year <- lubridate::year(date)
-  month <- lubridate::month(date)
-
-  fiscal_year <- year - (month < fiscal_start_month)
-  paste0(fiscal_year, "/", fiscal_year + 1)
-}
-
 make_fiscal_year_lookup_table = function(dates) {
   dates_uq = sort(unique(as.Date(dates)))
-  tibble(date = dates_uq, fiscal = get_fiscal_year(date))
+  tibble(date = dates_uq, fiscal = hsiar::as_fiscal(date))
 }
 
-pull_encounters = function() {
+pull_msp = function() {
   con = hiConnect()
   query = sql("
-  SELECT pracnum, servdt, count(clnt_label) as msp_encounters
+  SELECT pracnum, servdt, count(clnt_label) as encounters
   FROM (
     SELECT distinct
       clnt.mrg_clnt_anon_idnt_id as clnt_label,
@@ -93,20 +84,18 @@ pull_encounters = function() {
   hiQuery(query, con=con)
 }
 
-clean_encounters = function(encounters_raw) {
-  x = make_fiscal_year_lookup_table(encounters_raw$servdt)
-
-  df = encounters_raw |>
-    mutate(msp_encounters = as.integer(msp_encounters)) |>
+clean_msp = function(msp_raw) {
+  df = msp_raw |>
+    mutate(encounters = as.integer(encounters)) |>
     mutate(servdt = as.Date(servdt)) |>
     mutate(yearmon = as.yearmon(servdt)) |>
-    inner_join(x, by=join_by(servdt == date))
+    mutate(fiscal = hsiaR::as_fiscal(servdt, example_format = "2020/2021"))
 
   p = df |>
     group_by(yearmon) |>
-    summarise(msp_encounters = sum(msp_encounters)) |>
+    summarise(encounters = sum(encounters)) |>
     ungroup() |>
-    mutate(z = (msp_encounters - mean(msp_encounters)) / sd(msp_encounters)) # z-score
+    mutate(z = (encounters - mean(encounters)) / sd(encounters)) # z-score
 
   # We can see that the final month is incomplete so we'll dump it
   #ggplot(p, aes(yearmon, z)) + geom_line()
@@ -119,7 +108,8 @@ clean_encounters = function(encounters_raw) {
   # check for no missing dates
   stopifnot(diff(r$yearmon) |> round(digits = 12) |> unique() |> length() == 1)
 
-  inner_join(df, r)
+  inner_join(df, r) |>
+    select(pracnum, servdt, yearmon, fiscal, encounters)
 }
 
 
@@ -152,7 +142,7 @@ clean_vt4 = function(vt4_raw) {
   )
 }
 
-get_encounters_fps = function(encounters, vt4, policy_dates) {
+get_fps = function(msp, vt4, policy_dates) {
   fp_specs = policy_dates |>
     filter(anything_else == "Family medicine") |>
     pull(specs) |>
@@ -162,11 +152,18 @@ get_encounters_fps = function(encounters, vt4, policy_dates) {
     filter(funcspec %in% fp_specs) |>
     select(pracnum, fiscal, funcspec, ha_cd, prac_age, prac_gender, all_source_pd)
 
-  inner_join(encounters, vt4_fps, by=join_by(pracnum, fiscal)) |>
+  inner_join(msp, vt4_fps, by=join_by(pracnum, fiscal)) |>
     mutate(is_treated = between(servdt, policy_dates$start_date, policy_dates$end_date))
 }
 
-plot_LFP_encounters = function(df = encounters_LFP, group_vars = c("yearmon", "is_treated"), value = "msp_encounters", .f = sum, include_geom_smooth = T) {
+get_fp_per_prac = function(fp) fp |>
+  group_by(yearmon, is_treated, pracnum) |>
+  summarise(
+    all_source_pd = sum(all_source_pd),
+    encounters = sum(encounters)
+  )
+
+LFP_plot = function(df=fp, lfp=LFP, group_vars = c("yearmon", "is_treated"), value = "encounters", .f = sum, include_geom_smooth = T) {
 
   group_vars = syms(group_vars)
   x = group_vars[[1]]
@@ -180,11 +177,85 @@ plot_LFP_encounters = function(df = encounters_LFP, group_vars = c("yearmon", "i
     aes(x=!!x, y=!!value, color=is_treated) +
     geom_line() +
     geom_point() +
-    geom_vline(xintercept = as.yearmon(LFP$start_date), color='red', linetype = 'dashed') +
+    geom_vline(xintercept = as.yearmon(lfp$start_date), color='red', linetype = 'dashed') +
     ggthemes::theme_clean() +
     scale_color_viridis_d() +
     theme(legend.position = 'none') +
-    labs(x='month')
+    labs(x=NULL, y=NULL)
 
   if (include_geom_smooth) g + geom_smooth(method = 'lm', se = F, linetype = 'dashed', linewidth = .5) else g
+}
+
+create_fp_per_prac_density_pd_plot = function(fp_per_prac) ggplot(fp_per_prac) +
+  aes(x=all_source_pd) +
+  geom_density(aes(color=is_treated)) +
+  scale_colour_viridis_d() +
+  theme(legend.position = 'bottom') +
+  scale_x_continuous(labels = scales::label_dollar(scale = 1/10^6, suffix = "M")) +
+  ggthemes::theme_clean()
+
+create_fp_per_prac_box_pd_plot = function(fp_per_prac) ggplot(fp_per_prac) +
+  aes(y=all_source_pd) +
+  geom_boxplot(aes(color=is_treated)) +
+  scale_colour_viridis_d() +
+  theme(legend.position = 'bottom') +
+  scale_x_continuous(labels = scales::label_dollar(scale = 1/10^6, suffix = "M")) +
+  ggthemes::theme_clean()
+
+create_fp_per_prac_density_enc_plot = function(fp_per_prac) ggplot(fp_per_prac) +
+  aes(x=encounters) +
+  geom_density(aes(color=is_treated)) +
+  scale_colour_viridis_d() +
+  theme(legend.position = 'bottom') +
+  scale_x_continuous() +
+  ggthemes::theme_clean()
+
+create_fp_per_prac_box_enc_plot = function(fp_per_prac) ggplot(fp_per_prac) +
+  aes(y=encounters) +
+  geom_boxplot(aes(color=is_treated)) +
+  scale_colour_viridis_d() +
+  theme(legend.position = 'bottom') +
+  scale_x_continuous() +
+  ggthemes::theme_clean()
+
+create_fp_per_prac_corr_enc_plot = function(fp_per_prac) ggplot(fp_per_prac) +
+  aes(x=encounters, y=all_source_pd, color=is_treated) +
+  geom_point(alpha = .3) +
+  scale_color_viridis_d() +
+  theme(legend.position = 'bottom') +
+  ggthemes::theme_clean()
+
+create_ts_enc_plot = function(fp, LFP) {
+  LFP_plot(fp, LFP) +
+    scale_y_continuous(labels = function(x) x/10^6) +
+    labs(y='MSP encounters (M)')
+}
+
+create_ts_pracs_plot = function(fp, LFP) {
+  LFP_plot(fp, LFP, value = "pracnum", .f = n_distinct) +
+    scale_y_continuous(labels = scales::label_comma()) +
+    labs(y="# distinct FPs")
+}
+
+create_ts_enc_per_prac_plot = function(fp, LFP) {
+  fp |>
+    group_by(yearmon, is_treated, pracnum) |>
+    summarise(encounters = sum(encounters)) |>
+    LFP_plot(lfp = LFP, .f=mean) +
+    scale_y_continuous(labels = scales::label_comma()) +
+    labs(y="Mean encounters per month")
+}
+
+create_ts_pd_plot = function(fp, LFP) {
+  LFP_plot(fp, LFP, value='all_source_pd') +
+    scale_y_continuous(labels = scales::label_dollar(scale = 1/10^9, suffix = "B", accuracy = 1)) +
+    labs(y="All source paid")
+}
+
+create_ts_pd_per_prac_plot = function(fp, LFP) {
+  fp |>
+    group_by(yearmon, is_treated, pracnum) |>
+    summarise(all_source_pd = sum(all_source_pd)) |>
+    LFP_plot(lfp=LFP, value='all_source_pd', .f=mean) +
+    scale_y_continuous(labels = scales::label_dollar())
 }

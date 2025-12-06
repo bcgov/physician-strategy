@@ -5,6 +5,7 @@ date: today
 fontfamily: "BC Sans"
 format: 
   html:
+    fig-width: 10
     theme: hsiaR_html_style.scss
     toc: true
     lightbox: 
@@ -17,20 +18,20 @@ bibliography:
 editor_options: 
   chunk_output_type: console
 execute: 
-  echo: fenced
+  echo: false
   warning: false
   message: false
+  cache: true
 params:
   ggplot: yes
-  echarts: yes
 ---
 
 ```{r setup}
 pacman::p_load(targets, tarchetypes, hsiaR, tidyverse, reactable)
 if (!exists("params")) params = list(ggplot = T, echarts = F)
-ggplot2::theme_set(ggthemes::theme_clean())
 echarts4r::e_common(font_family = "BC Sans", theme = "Westeros")
 source("R/functions.R")
+ggplot2::theme_set(ggthemes::theme_clean(base_size = 16))
 ```
 
 ## Physicians in Canada
@@ -39,44 +40,123 @@ Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapi
 
 Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
 
-## Encounters
+## MSP
 
 This table shows some data on the HealthIdeas queries.
 
 ```{r}
 tar_meta() |> 
   filter(str_ends(name, "_raw")) |> 
-  select(name, time, size, seconds) |>
+  select(name, time, bytes, seconds) |>
+  mutate(date = as.Date(time), minutes = round(seconds / 60, 1)) |>
+  select(name, date, bytes, minutes) |>
   reactable()
 ```
 
 Here are the fiscal years for encounters data:
 
-
 As of right now, VT4 data is only up to 2023/24. This is not good, cuz LFP is recent so **FOR NOW** I'm gonna add rows that assume pracs just have the same info from the last year on record (plus one year older). See `clean_vt4`. We'll fix this in the future.
 
 ```{r}
 #| eval: false
-tar_load(c(encounters, vt4))
-sort(unique(encounters$fiscal))
+tar_load(c(msp, vt4))
+sort(unique(msp$fiscal))
 sort(unique(vt4$fiscal))
-stopifnot(identical(max(vt4$fiscal), max(encounters$fiscal)))
+stopifnot(identical(max(vt4$fiscal), max(msp$fiscal)))
 ```
 
 ### FPs
 
 ```{r}
-tar_load(c(policy_dates, encounters_fps))
-LFP = policy_dates |> filter(anything_else == 'Family medicine')
+tar_load(c(policy_dates, fp, LFP))
 ```
 
-In this section, we analyze the impact of the [Longitudianl Family Physician Payment Model (LFP)](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/msp/physicians/longitudinal-family-physician-lfp-payment-model). This affects family doctors (FPs) only; the FPs specs are `r first(LFP$specs) |> paste(collapse = ", ")`. The LFP model began February 1, 2023. We will use that date as the threshold, although maybe we can get better info as to who is on LFP and who isn't.
+
+In this section, we analyze the impact of the [Longitudinal Family Physician Payment Model (LFP)](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/msp/physicians/longitudinal-family-physician-lfp-payment-model). This affects family doctors (FPs) only; the FPs specs are `r first(LFP$specs) |> paste(collapse = ", ")`. The LFP model began February 1, 2023. We will use that date as the threshold, although maybe we can get better info as to who is on LFP and who isn't.
+
+
+#### Data Investigatoin
+
+```{r}
+tar_load(fp_per_prac)
+fp_per_prac
+```
+
+There is something suspicious about earnings.
+
+```{r}
+tar_read(fp_per_prac_density_pd_plot) +
+  ggtitle("Density of all_source_pd per month", "I doubt someone is actually making $80M/month")
+```
+
+```{r}
+tar_read(fp_per_prac_box_pd_plot) +
+  ggtitle("Boxplot of all_source_pd per month", "There are many outliers")
+```
+
+```{r}
+# The median is over $4M? Per month?
+summary(fp_per_prac$all_source_pd)
+```
+
+Now let's look at encounters.
+
+```{r}
+tar_read(fp_per_prac_density_pd_plot) +
+  ggtitle("Density of # encounters per month", "Once again, the skew is very right-tailed")
+```
+
+```{r}
+tar_read(fp_per_prac_box_pd_plot) +
+  ggtitle("Boxplot of # encounters per month", "And again, there are many outliers")
+```
+
+Are the high encounter people the high earners?
+
+```{r}
+tar_read(fp_per_prac_corr_enc_plot) +
+  ggtitle("Corr plot")
+```
+
+
+#### Time Series Plots
+
+The red line shows LFP implementation.
+
+```{r}
+tar_read(ts_enc_plot) +
+  ggtitle("Total MSP encounters by Month", "Encounters fall after LFP")
+```
+
+```{r}
+tar_read(ts_pracs_plot) +
+  ggtitle("# distinct FP pracs per month", "FPs grow steadily until LFP; decline about 1 year after LFP, possibly accelerating")
+```
+
+```{r}
+tar_read(ts_enc_per_prac_plot) +
+  ggtitle("Average # encounters per FP per month", "Encounters per FP has been falling continuously; slightly faster after LFP")
+```
+
+```{r}
+tar_read(ts_pd_plot) + 
+  ggtitle("All Source Paid to FPs over time", "Total payments have been rising continuously with a large jump with LFP,\nfollowed by decline")
+```
+
+```{r}
+tar_read(ts_pd_per_prac_plot) +
+  ggtitle("All Source Paid to FPs over time", "Total payments have been rising continuously with a large jump with LFP,\nfollowed by decline")
+```
+
+
+
 
 This table shows us how many days we have data, before and after the implementation of LFP. We will balance the data so that each side is equal.
 
+
 ```{r}
 stopifnot(
-  encounters_fps$servdt |> 
+  fp$servdt |> 
     unique() |>
     sort() |>
     diff() |>
@@ -86,7 +166,7 @@ stopifnot(
 
 
 ```{r}
-n_days = encounters_fps |>
+n_days = fp |>
   group_by(is_treated) |>
   summarise(n_days = n_distinct(servdt))
 
@@ -96,12 +176,12 @@ n_days
 ```
 
 ```{r}
-encounters_LFP = encounters_fps |> 
+fp_trim = fp |> 
   filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus))
 
 # check they're equal
 stopifnot(
-  encounters_LFP |>
+  fp_trim |>
     group_by(is_treated) |>
     summarise(n_days = n_distinct(servdt)) |>
     pull(n_days) |>
@@ -111,124 +191,79 @@ stopifnot(
 ```
 
 
-```{r}
-# mean encounters per day
-
-encounters_LFP |>
-  group_by(is_treated) |>
-  summarise(msp_encounters = mean(msp_encounters))
-```
-
-```{r}
-plot_LFP_encounters(encounters_LFP, value = "msp_encounters", .f = sum) +
-  ggtitle("Total MSP Encounters by Month") +
-  scale_y_continuous(labels = scales::label_comma())
-```
-
-```{r}
-plot_LFP_encounters(encounters_LFP, value = "msp_encounters", .f = mean) +
-  ggtitle("Mean MSP Encounters by Month") +
-  scale_y_continuous(labels = scales::label_comma()) +
-  labs(y='mean # msp encounters per prac')
-```
-
-```{r}
-plot_LFP_encounters(encounters_LFP, value = "pracnum", .f = n_distinct) +
-  ggtitle("# distinct FP pracs per month") +
-  scale_y_continuous(labels = scales::label_comma())
-```
-
-```{r}
-encounters_LFP |>
-  group_by(yearmon, is_treated, pracnum) |>
-  summarise(all_source_pd = sum(all_source_pd) / 10^6) |>
-  plot_LFP_encounters(group_vars = c("yearmon", "is_treated"), value = "all_source_pd", .f = mean) +
-  ggtitle("Average All Source PD per prac") +
-  scale_y_continuous(labels = scales::label_dollar(accuracy = .1, suffix = "M"))
-```
-
-```{r}
-encounters_LFP |>
-  group_by(yearmon, is_treated) |>
-  summarise(all_source_pd = sum(all_source_pd), msp_encounters = sum(msp_encounters)) |>
-  ungroup() |>
-  mutate(pd_per_enc = all_source_pd / msp_encounters) |>
-  plot_LFP_encounters(group_vars = c("yearmon", "is_treated"), value = "pd_per_enc", .f = sum) +
-  ggtitle("Sum All Source PD per encounter", "LFP increased all source pd by XXX") +
-  scale_y_continuous(labels = scales::label_dollar(accuracy = 1))
-```
-
-### T Tests
-
-```{r}
-enc_per_day = encounters_pm |>
-  filter(between(servdt, policy_dates$start_date - 365/2, policy_dates$start_date + 365/2)) |>
-  group_by(is_treated, pracnum) |>
-  summarise(msp_encounters = mean(msp_encounters)) |>
-  ungroup() |>
-  na.omit()
-```
-
-```{r}
-enc_per_day |>
-  ggplot(aes(x=is_treated, y=msp_encounters, color=is_treated)) +
-  geom_jitter(alpha=.5) +
-  stat_summary(fun = mean, geom = 'point', aes(group=1), color='red') +
-  stat_summary(fun = mean, geom = 'line', aes(group=1), color='red') +
-  ggthemes::theme_clean() +
-  scale_color_viridis_d() +
-  ggtitle("Average Encounters per day")
-```
-
-```{r}
-enc_per_day |>
-  ggplot(aes(x=is_treated, y=msp_encounters, color=is_treated)) +
-  geom_boxplot(alpha=.5, outlier.shape = 2) +
-  ggthemes::theme_clean() +
-  scale_color_viridis_d() +
-  ggtitle("Average Encounters per day", "Distributions are kind of the same save some outliers") +
-  theme(legend.position = 'none')
-```
 
 
-```{r}
-enc_per_day |>
-  ggplot(aes(x=msp_encounters, color=is_treated)) +
-  geom_density() +
-  ggthemes::theme_clean() +
-  ggtitle("Sure ain't normally distributed")
-```
+<!-- ### T Tests -->
 
-```{r}
-t.test(msp_encounters ~ is_treated, data = enc_per_day) # rejected!
-```
+<!-- ```{r} -->
+<!-- enc_per_day = fp_trim |> -->
+<!--   filter(between(servdt, policy_dates$start_date - 365/2, policy_dates$start_date + 365/2)) |> -->
+<!--   group_by(is_treated, pracnum) |> -->
+<!--   summarise(msp_encounters = mean(msp_encounters)) |> -->
+<!--   ungroup() |> -->
+<!--   na.omit() -->
+<!-- ``` -->
 
-```{r}
-cihi |>
-  filter(jurisdiction == "B.C.", health_region == 'B.C.', specialty == 'Family medicine') |>
-  select(year, number_of_physicians_who_returned_from_abroad) |>
-  mutate(is_treated = year > year(LFP$start_date)) |>
-  mutate(size = is_treated * 3) |>
-  ggplot(aes(x=year, y=number_of_physicians_who_returned_from_abroad)) +
-  geom_line(aes(color=is_treated)) +
-  geom_point(aes(color=is_treated, size=size)) +
-  geom_smooth(method = 'lm', se=F, color='black', linetype='dashed', linewidth=.5) +
-  ggthemes::theme_clean() +
-  scale_colour_viridis_d()
-```
+<!-- ```{r} -->
+<!-- enc_per_day |> -->
+<!--   ggplot(aes(x=is_treated, y=msp_encounters, color=is_treated)) + -->
+<!--   geom_jitter(alpha=.5) + -->
+<!--   stat_summary(fun = mean, geom = 'point', aes(group=1), color='red') + -->
+<!--   stat_summary(fun = mean, geom = 'line', aes(group=1), color='red') + -->
+<!--   ggthemes::theme_clean() + -->
+<!--   scale_color_viridis_d() + -->
+<!--   ggtitle("Average Encounters per day") -->
+<!-- ``` -->
 
-```{r}
-enc_per_day |>
-  pivot_wider(names_from = is_treated, values_from = msp_encounters, ) |>
-  na.omit() |>
-  ggplot(aes(x=`FALSE`, y=`TRUE`)) +
-  geom_point(alpha = .3, color = viridis::viridis_pal()(1)) +
-  #geom_smooth(method = 'lm', linetype = 'dotted', se=F) +
-  scale_x_continuous(limits = c(0,100), expand = expansion(mult = c(0, 0), add = c(0,1))) +
-  scale_y_continuous(limits = c(0,100), expand = expansion(mult = c(0, 0), add = c(0,1))) +
-  #theme_minimal() +
-  ggthemes::theme_clean() +
-  geom_abline(slope = .5) +
-  ggtitle("Encounters Per Day, Before and After LFP", "Most FPs see more patients after LFP") +
-  labs(x="Before LFP", y="After LPF")
-```
+<!-- ```{r} -->
+<!-- enc_per_day |> -->
+<!--   ggplot(aes(x=is_treated, y=msp_encounters, color=is_treated)) + -->
+<!--   geom_boxplot(alpha=.5, outlier.shape = 2) + -->
+<!--   ggthemes::theme_clean() + -->
+<!--   scale_color_viridis_d() + -->
+<!--   ggtitle("Average Encounters per day", "Distributions are kind of the same save some outliers") + -->
+<!--   theme(legend.position = 'none') -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- enc_per_day |> -->
+<!--   ggplot(aes(x=msp_encounters, color=is_treated)) + -->
+<!--   geom_density() + -->
+<!--   ggthemes::theme_clean() + -->
+<!--   ggtitle("Sure ain't normally distributed") -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- t.test(msp_encounters ~ is_treated, data = enc_per_day) # rejected! -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- cihi |> -->
+<!--   filter(jurisdiction == "B.C.", health_region == 'B.C.', specialty == 'Family medicine') |> -->
+<!--   select(year, number_of_physicians_who_returned_from_abroad) |> -->
+<!--   mutate(is_treated = year > year(LFP$start_date)) |> -->
+<!--   mutate(size = is_treated * 3) |> -->
+<!--   ggplot(aes(x=year, y=number_of_physicians_who_returned_from_abroad)) + -->
+<!--   geom_line(aes(color=is_treated)) + -->
+<!--   geom_point(aes(color=is_treated, size=size)) + -->
+<!--   geom_smooth(method = 'lm', se=F, color='black', linetype='dashed', linewidth=.5) + -->
+<!--   ggthemes::theme_clean() + -->
+<!--   scale_colour_viridis_d() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- enc_per_day |> -->
+<!--   pivot_wider(names_from = is_treated, values_from = msp_encounters, ) |> -->
+<!--   na.omit() |> -->
+<!--   ggplot(aes(x=`FALSE`, y=`TRUE`)) + -->
+<!--   geom_point(alpha = .3, color = viridis::viridis_pal()(1)) + -->
+<!--   #geom_smooth(method = 'lm', linetype = 'dotted', se=F) + -->
+<!--   scale_x_continuous(limits = c(0,100), expand = expansion(mult = c(0, 0), add = c(0,1))) + -->
+<!--   scale_y_continuous(limits = c(0,100), expand = expansion(mult = c(0, 0), add = c(0,1))) + -->
+<!--   #theme_minimal() + -->
+<!--   ggthemes::theme_clean() + -->
+<!--   geom_abline(slope = .5) + -->
+<!--   ggtitle("Encounters Per Day, Before and After LFP", "Most FPs see more patients after LFP") + -->
+<!--   labs(x="Before LFP", y="After LPF") -->
+<!-- ``` -->
