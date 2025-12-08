@@ -15,18 +15,25 @@ list(
   tar_target(vt4_raw, pull_vt4()),
   tar_target(vt4, clean_vt4(vt4_raw)),
 
-  tar_target(fp, get_fps(msp, vt4, policy_dates)),
-  tar_target(fp_per_prac, get_fp_per_prac(fp)),
+  tar_target(fp, get_fp(msp, vt4, policy_dates)),
+  tar_target(fp_yearmon, get_fp_yearmon(fp)),
+  tar_target(fp_trim, get_fp_trim(fp, policy_dates)),
 
-  tar_target(fp_per_prac_density_pd_plot, create_fp_per_prac_density_pd_plot(fp_per_prac)),
-  tar_target(fp_per_prac_box_pd_plot, create_fp_per_prac_box_pd_plot(fp_per_prac)),
-  tar_target(fp_per_prac_density_enc_plot, create_fp_per_prac_density_enc_plot(fp_per_prac)),
-  tar_target(fp_per_prac_box_enc_plot, create_fp_per_prac_box_enc_plot(fp_per_prac)),
-  tar_target(fp_per_prac_corr_enc_plot, create_fp_per_prac_corr_enc_plot(fp_per_prac)),
+  tar_target(density_plots, create_density_plots(fp_yearmon)),
+  tar_target(ts_plots, create_ts_plots(data=fp, LFP=LFP, save = T))
 
-  tar_target(ts_enc_plot, create_ts_enc_plot(fp, LFP)),
-  tar_target(ts_pracs_plot, create_ts_pracs_plot(fp, LFP)),
-  tar_target(ts_enc_per_prac_plot, create_ts_enc_per_prac_plot(fp, LFP)),
-  tar_target(ts_pd_plot, create_ts_pd_plot(fp, LFP)),
-  tar_target(ts_pd_per_prac_plot, create_ts_pd_per_prac_plot(fp, LFP))
+
+  # tar_target(fp_per_prac_density_pd_plot, save_plot("fp_per_prac_density_pd_plot", create_fp_per_prac_density_pd_plot(fp_per_prac))),
+  # tar_target(fp_per_prac_box_pd_plot, create_fp_per_prac_box_pd_plot(fp_per_prac)),
+  # tar_target(fp_per_prac_density_enc_plot, create_fp_per_prac_density_enc_plot(fp_per_prac)),
+  # tar_target(fp_per_prac_box_enc_plot, create_fp_per_prac_box_enc_plot(fp_per_prac)),
+  # tar_target(fp_per_prac_corr_enc_plot, create_fp_per_prac_corr_enc_plot(fp_per_prac)),
+  #
+  # tar_target(ts_enc_plot, create_ts_enc_plot(fp, LFP)),
+  # tar_target(ts_pracs_plot, create_ts_pracs_plot(fp, LFP)),
+  # tar_target(ts_enc_per_prac_plot, create_ts_enc_per_prac_plot(fp, LFP)),
+  # tar_target(ts_pd_plot, create_ts_pd_plot(fp, LFP)),
+  # tar_target(ts_pd_per_prac_plot, create_ts_pd_per_prac_plot(fp, LFP))
+
+  #tar_target(unpaired_tests, create_unpaired_tests(fp_trim))
 )
