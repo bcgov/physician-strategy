@@ -152,8 +152,16 @@ get_fp = function(msp, vt4, policy_dates) {
     filter(funcspec %in% fp_specs) |>
     select(pracnum, fiscal, funcspec, ha_cd, prac_age, prac_gender, all_source_pd)
 
-  inner_join(msp, vt4_fps, by=join_by(pracnum, fiscal)) |>
+  fp = inner_join(msp, vt4_fps, by=join_by(pracnum, fiscal)) |>
     mutate(is_treated = between(servdt, policy_dates$start_date, policy_dates$end_date))
+
+  stopifnot(
+    fp |>
+      count(pracnum, servdt) |>
+      pull(n) |>
+      unique() == 1
+  )
+  fp
 }
 
 get_fp_yearmon = function(fp) fp |>
@@ -168,12 +176,23 @@ get_fp_trim = function(data, policy_dates) {
     group_by(is_treated) |>
     summarise(n_days = n_distinct(servdt))
   plus_minus = n_days[[2,2]]
-  data |>
-    filter(between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus))
+
+  df = filter(data, between(servdt, policy_dates$start_date - plus_minus, policy_dates$start_date + plus_minus))
+
+  stopifnot(
+    df |>
+      group_by(is_treated) |>
+      summarise(n_days = n_distinct(servdt)) |>
+      pull(n_days) |>
+      unique() |>
+      length() == 1
+  )
+
+  df
 }
 
 
-save_plot = function(filename, plot, width=10) ggsave("output/" %,% filename %,% ".png", width = width)
+save_plot = function(filename, plot) ggsave("output/" %,% filename %,% ".png", width = 8, height = 5, dpi = 300)
 
 create_density_plot = function(data, filename, save=F, x=NULL, y=NULL, color=NULL, geoms, labels_x=NULL, labels_y=NULL, legend.position='bottom', title=NULL, ...) {
   aes_list = list()
@@ -185,7 +204,7 @@ create_density_plot = function(data, filename, save=F, x=NULL, y=NULL, color=NUL
   g = ggplot(data, aes(!!!aes_list))
   g = g + geoms
   g = g + scale_colour_viridis_d()
-  g = g + ggthemes::theme_clean(base_size = 16)
+  g = g + ggthemes::theme_clean(base_size = 14)
   g = g + theme(legend.position = legend.position)
   if (!is.null(labels_x)) g = g + scale_x_continuous(labels = labels_x)
   if (!is.null(labels_y)) g = g + scale_y_continuous(labels = labels_y)
@@ -193,16 +212,6 @@ create_density_plot = function(data, filename, save=F, x=NULL, y=NULL, color=NUL
   g = g + dots
   if (save) save_plot(filename, g)
   g
-}
-
-create_density_plots = function(data) {
-  create_density_plot(data, 'density_pd', T, x='all_source_pd', color = 'is_treated', geoms = geom_density(), labels_x = scales::label_dollar(scale = 1/10^6, suffix = "M"), title = c("Density of all_source_pd per month", "I doubt someone is actually making $80M/month"))
-
-  create_density_plot(data, 'box_pd', T, y='all_source_pd', color = 'is_treated', geoms = geom_boxplot(), labels_y = scales::label_dollar(scale = 1/10^6, suffix = "M"), title = c("Boxplot of all_source_pd per month", "There are many outliers"))
-
-  create_density_plot(data, 'density_enc', T, x='encounters', color = 'is_treated', geoms = geom_density(), title = c("Density of # encounters per month", "Once again, the skew is very right-tailed"))
-
-  create_density_plot(data, 'box_enc', T, y='encounters', color = 'is_treated', geoms = geom_boxplot(), title = c("Boxplot of # encounters per month", "And again, there are many outliers"))
 }
 
 LFP_plot = function(data, LFP, group_vars = c("yearmon", "is_treated"), value = "encounters", .f = sum, include_geom_smooth = T) {
@@ -218,49 +227,12 @@ LFP_plot = function(data, LFP, group_vars = c("yearmon", "is_treated"), value = 
     geom_line() +
     geom_point() +
     geom_vline(xintercept = as.yearmon(LFP$start_date), color='red', linetype = 'dashed') +
-    ggthemes::theme_clean(base_size = 16) +
+    ggthemes::theme_clean(base_size = 14) +
     scale_color_viridis_d() +
     theme(legend.position = 'none') +
     labs(x=NULL, y=NULL)
   if (include_geom_smooth) g = g + geom_smooth(method = 'lm', se = F, linetype = 'dashed', linewidth = .5)
   g
-}
-
-create_ts_plots = function(data, LFP, save=F) {
-  LFP_plot(data, LFP) +
-    scale_y_continuous(labels = function(x) x/10^6) +
-    labs(y='MSP encounters (M)') +
-    ggtitle("Total MSP encounters by Month", "Encounters fall after LFP")
-  if (save) save_plot('ts_enc_plot')
-
-  LFP_plot(data, LFP, value = "pracnum", .f = n_distinct) +
-    scale_y_continuous(labels = scales::label_comma()) +
-    labs(y="# distinct FPs") +
-    ggtitle("# distinct FP pracs per month", "FPs grow steadily until LFP; decline about 1 year after LFP, possibly accelerating")
-  if (save) save_plot('ts_pracs_plot')
-
-  data |>
-    group_by(yearmon, is_treated, pracnum) |>
-    summarise(encounters = sum(encounters)) |>
-    LFP_plot(LFP, .f=mean) +
-    scale_y_continuous(labels = scales::label_comma()) +
-    labs(y="Mean encounters per month") +
-    ggtitle("Average # encounters per FP per month", "Encounters per FP has been falling continuously; slightly faster after LFP")
-  if (save) save_plot('ts_enc_per_prac_plot')
-
-  LFP_plot(data, LFP, value='all_source_pd') +
-    scale_y_continuous(labels = scales::label_dollar(scale = 1/10^9, suffix = "B", accuracy = 1)) +
-    labs(y="All source paid") +
-    ggtitle("All Source Paid to FPs over time", "Total payments have been rising continuously with a large jump with LFP,\nfollowed by decline")
-  if (save) save_plot('ts_pd_plot')
-
-  data |>
-    group_by(yearmon, is_treated, pracnum) |>
-    summarise(all_source_pd = sum(all_source_pd)) |>
-    LFP_plot(LFP, value='all_source_pd', .f=mean) +
-    scale_y_continuous(labels = scales::label_dollar()) +
-    ggtitle("All Source Paid to FPs over time", "Total payments have been rising continuously with a large jump with LFP,\nfollowed by decline")
-  if (save) save_plot('ts_pd_per_prac_plot')
 }
 
 create_unpaired_tests = function(data, group_vars=c('encounters', 'all_source_pd')) {
@@ -271,8 +243,8 @@ create_unpaired_tests = function(data, group_vars=c('encounters', 'all_source_pd
     nest(data = c(is_treated, value)) |>
     mutate(t_test = map(data, ~t.test(value ~ is_treated, data = .))) |>
     mutate(wilcox_test = map(data, ~wilcox.test(value ~ is_treated, data = .))) |>
-    mutate(t_test = map(t_test, broom::tidy)) |>
-    mutate(wilcox_test = map(wilcox_test, broom::tidy))
+    select(-data) |>
+    mutate(across(c(t_test, wilcox_test), ~map(., broom::tidy)))
 }
 
 
@@ -304,6 +276,5 @@ create_paired_tests = function(data, group_vars=c('encounters', 'all_source_pd')
     nest(.by = variable)
 
   tibble(variable = as.character(group_vars), t_test = t_test$data, wilcox_test = wilcox_test$data)
-
 }
 

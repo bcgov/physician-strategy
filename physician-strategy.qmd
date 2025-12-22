@@ -26,12 +26,11 @@ params:
 ---
 
 ```{r setup}
-pacman::p_load(hsiaR, tidyverse, reactable)
+pacman::p_load(targets, hsiaR, tidyverse, reactable, htmltools)
 if (!exists("params")) params = list(ggplot = T, echarts = F)
 #echarts4r::e_common(font_family = "BC Sans", theme = "Westeros")
 source("R/functions.R")
-
-tar_load(c(policy_dates, fp, LFP, fp_per_prac))
+tar_load(c(LFP, fp_trim))
 ```
 
 ## Physicians in Canada
@@ -51,7 +50,7 @@ tar_meta() |>
   arrange(desc(bytes)) |>
   mutate(date = as.Date(time), minutes = round(seconds / 60, 1)) |>
   select(name, date, bytes, minutes) |>
-  reactable()
+  reactable(bordered = T)
 ```
 
 Here are the fiscal years for encounters data:
@@ -73,35 +72,12 @@ In this section, we analyze the impact of the [Longitudinal Family Physician Pay
 
 #### Data Investigation
 
-```{r}
-#| eval: false
-
-# ensure one row per day per phys
-stopifnot(
-  fp |>
-    count(pracnum, servdt) |>
-    pull(n) |>
-    unique() == 1
-)
-
-```
-
-
-```{r}
-fp_per_prac
-```
-
 There is something suspicious about earnings.
 
 ![](output/density_pd.png)
 
 
 ![](output/box_pd.png)
-
-```{r}
-# The median is over $4M? Per month?
-summary(fp_per_prac$all_source_pd)
-```
 
 Now let's look at encounters.
 
@@ -128,138 +104,45 @@ This table shows us how many days we have data, before and after the implementat
 
 
 
+### Hypothesis Tests
+
+![](output/t_test_plot_encounters.png)
+
+![](output/t_test_plot_all_source_pd.png)
 
 
-<!-- ```{r} -->
-<!-- n_days = fp |> -->
-<!--   group_by(is_treated) |> -->
-<!--   summarise(n_days = n_distinct(servdt)) -->
+```{r}
+#| results: asis
+tar_load(unpaired_tests)
+walk(c('t_test', 'wilcox_test'), function(col) {
+  print(h3("Unpaired test: " %,% col))
+  t = unnest(unpaired_tests, cols = c(col)) |>
+    mutate(across(where(is.double), ~round(., 2))) |>
+    select(-ends_with("_test")) |>
+    reactable(bordered = T)
+  print(tagList(t))
+})
+```
 
-<!-- plus_minus = n_days[[2,2]] -->
+Unpaired tests show significant differences between before and after the LFP.
 
-<!-- n_days -->
-<!-- ``` -->
+```{r}
+#| results: asis
+tar_load(paired_tests)
+walk(c('t_test', 'wilcox_test'), function(col) {
+  print(h3("Paired test: " %,% col))
+  t = unnest(paired_tests, cols = c(col)) |>
+    mutate(across(where(is.double), ~round(., 2))) |>
+    select(-ends_with("_test")) |>
+    reactable(bordered = T)
+  print(tagList(t))
+})
+```
 
-<!-- ```{r} -->
-
-<!-- # check they're equal -->
-<!-- stopifnot( -->
-<!--   fp_trim |> -->
-<!--     group_by(is_treated) |> -->
-<!--     summarise(n_days = n_distinct(servdt)) |> -->
-<!--     pull(n_days) |> -->
-<!--     unique() |> -->
-<!--     length() == 1 -->
-<!-- ) -->
-<!-- ``` -->
-
-
-<!-- ### Hypothesis Tests -->
-
-<!-- ```{r} -->
-<!-- fp_pop = fp_trim |> -->
-<!--   group_by(servdt) |> -->
-<!--   summarise(pop = n_distinct(pracnum)) |> -->
-<!--   ungroup() -->
-
-<!-- fp_pop -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- unpaired_tests = create_unpaired_tests(fp_trim) -->
-<!-- unnest(unpaired_tests, cols = c(t_test, wilcox_test), names_repair = 'minimal') -->
-<!-- ``` -->
+Paired tests show significant differences between before and after the LFP.
 
 
-<!-- ```{r} -->
-<!-- group_vars = c('encounters', 'all_source_pd') -->
-<!-- fp_trim |> -->
-<!--     select(pracnum, is_treated, !!!group_vars) |> -->
-<!--     group_by(pracnum, is_treated) |> -->
-<!--     summarise(across(c(!!!group_vars), sum)) |> -->
-<!--     ungroup() |> -->
-<!--   ggplot(aes(x=is_treated, y=encounters, group=pracnum)) + -->
-<!--   geom_line() -->
-
-<!-- |> -->
-<!--     pivot_wider(names_from = is_treated, values_from = c(!!!group_vars)) |> -->
-<!--     na.omit() -->
-<!-- ``` -->
-
-
-
-<!-- ```{r} -->
-<!-- enc_per_day = fp_trim |> -->
-<!--   group_by(is_treated, pracnum) |> -->
-<!--   summarise(encounters = mean(encounters)) |> -->
-<!--   ungroup() |> -->
-<!--   na.omit() -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- enc_per_day |> -->
-<!--   pivot_wider(names_from = is_treated, values_from = encounters, ) |> -->
-<!--   na.omit() |> -->
-<!--   ggplot(aes(x=`FALSE`, y=`TRUE`)) + -->
-<!--   geom_point(alpha = .3, color = viridis::viridis_pal()(1)) + -->
-<!--   #geom_smooth(method = 'lm', linetype = 'dotted', se=F) + -->
-<!--   scale_x_continuous(limits = c(0,100), expand = expansion(mult = c(0, 0), add = c(0,1)))  -->
-<!--   scale_y_continuous(limits = c(0,100), expand = expansion(mult = c(0, 0), add = c(0,1))) + -->
-<!--   #theme_minimal() + -->
-<!--   ggthemes::theme_clean() + -->
-<!--   geom_abline(slope = .5) + -->
-<!--   ggtitle("Encounters Per Day, Before and After LFP", "Most FPs see more patients after LFP") + -->
-<!--   labs(x="Before LFP", y="After LPF") -->
-<!-- ``` -->
-
-
-
-
-<!-- ```{r} -->
-<!-- enc_per_day |> -->
-<!--   ggplot(aes(x=is_treated, y=encounters, color=is_treated)) + -->
-<!--   geom_jitter(alpha=.5) + -->
-<!--   stat_summary(fun = mean, geom = 'point', aes(group=1), color='red') + -->
-<!--   stat_summary(fun = mean, geom = 'line', aes(group=1), color='red') + -->
-<!--   ggthemes::theme_clean() + -->
-<!--   scale_color_viridis_d() + -->
-<!--   ggtitle("Average Encounters per day") -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- enc_per_day |> -->
-<!--   ggplot(aes(x=is_treated, y=encounters, color=is_treated)) + -->
-<!--   geom_boxplot(alpha=.5, outlier.shape = 2) + -->
-<!--   ggthemes::theme_clean() + -->
-<!--   scale_color_viridis_d() + -->
-<!--   ggtitle("Average Encounters per day", "Distributions are kind of the same save some outliers") + -->
-<!--   theme(legend.position = 'none') -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- enc_per_day |> -->
-<!--   ggplot(aes(x=encounters, color=is_treated)) + -->
-<!--   geom_density() + -->
-<!--   ggthemes::theme_clean() + -->
-<!--   ggtitle("Sure ain't normally distributed") -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- t.test(encounters ~ is_treated, data = enc_per_day) # rejected! -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- cihi |> -->
-<!--   filter(jurisdiction == "B.C.", health_region == 'B.C.', specialty == 'Family medicine') |> -->
-<!--   select(year, number_of_physicians_who_returned_from_abroad) |> -->
-<!--   mutate(is_treated = year > year(LFP$start_date)) |> -->
-<!--   mutate(size = is_treated * 3) |> -->
-<!--   ggplot(aes(x=year, y=number_of_physicians_who_returned_from_abroad)) + -->
-<!--   geom_line(aes(color=is_treated)) + -->
-<!--   geom_point(aes(color=is_treated, size=size)) + -->
-<!--   geom_smooth(method = 'lm', se=F, color='black', linetype='dashed', linewidth=.5) + -->
-<!--   ggthemes::theme_clean() + -->
-<!--   scale_colour_viridis_d() -->
-<!-- ``` -->
+```{r}
+fp_trim
+```
 
