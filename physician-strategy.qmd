@@ -7,6 +7,7 @@ format:
   html:
     theme: hsiaR_html_style.scss
     toc: true
+    code-fold: true
     lightbox: 
       match: auto
       effect: fade
@@ -17,7 +18,7 @@ bibliography:
 editor_options: 
   chunk_output_type: console
 execute: 
-  echo: false
+  echo: true
   warning: false
   message: false
   cache: false
@@ -26,26 +27,25 @@ params:
 ---
 
 ```{r setup}
-pacman::p_load(targets, hsiaR, tidyverse, reactable, htmltools)
-if (!exists("params")) params = list(ggplot = T, echarts = F)
+#| results: false
+
+pacman::p_load(targets, hsiaR, tidyverse, reactable, htmltools, scales, patchwork)
+tar_load(c('policies', 'msp', 'vt4', 'fp'))
+
+nice_gg = function(base_size = 14) {
+  ggthemes::theme_clean(base_size) +
+  ggplot2::theme(legend.position = 'bottom')
+}
+
+#if (!exists("params")) params = list(ggplot = T, echarts = F)
 #echarts4r::e_common(font_family = "BC Sans", theme = "Westeros")
-source("R/functions.R")
-tar_load(c(LFP, fp_trim))
+#source("R/functions.R")
 ```
 
-## Physicians in Canada
-
-Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-
-Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-
-## MSP
-
-This table shows some data on the HealthIdeas queries.
+This table shows some data on the targets for this project.
 
 ```{r}
-tar_meta() |> 
-  #filter(str_ends(name, "_raw")) |> 
+tar_meta() |>
   select(name, time, bytes, seconds) |>
   arrange(desc(bytes)) |>
   mutate(date = as.Date(time), minutes = round(seconds / 60, 1)) |>
@@ -53,41 +53,94 @@ tar_meta() |>
   reactable(bordered = T)
 ```
 
-Here are the fiscal years for encounters data:
-
-As of right now, VT4 data is only up to 2023/24. This is not good, cuz LFP is recent so **FOR NOW** I'm gonna add rows that assume pracs just have the same info from the last year on record (plus one year older). See `clean_vt4`. We'll fix this in the future.
+Here are all the functions we are gonna use:
 
 ```{r}
-#| eval: false
-tar_load(c(msp, vt4))
-sort(unique(msp$fiscal))
-sort(unique(vt4$fiscal))
-stopifnot(identical(max(vt4$fiscal), max(msp$fiscal)))
+cat(read_lines("R/functions.R"))
 ```
+
+
+## Physicians in Canada
+
+CIHI data?
+
+## MSP
+
+We have MSP encounter data for years: `r sort(unique(msp$fiscal))`. We have VT4 data for years:  `r sort(unique(vt4$fiscal))`
 
 ### FPs
 
-In this section, we analyze the impact of the [Longitudinal Family Physician Payment Model (LFP)](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/msp/physicians/longitudinal-family-physician-lfp-payment-model). This affects family doctors (FPs) only; the FPs specs are `r first(LFP$specs) |> paste(collapse = ", ")`. The LFP model began February 1, 2023. We will use that date as the threshold, although maybe we can get better info as to who is on LFP and who isn't.
+In this section, we analyze the impact of the [Longitudinal Family Physician Payment Model (LFP)](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/msp/physicians/longitudinal-family-physician-lfp-payment-model). This affects family doctors (FPs) only; the FPs specs are `r filter(policies, policy=='LFP')$specs[[1]] |> paste(collapse = ", ")`. The LFP model began `r filter(policies, policy=='LFP')$start_date |> format("%B %d, %Y")`. We will use that date as the threshold, although maybe we can get better info as to who is on LFP and who isn't.
 
 
 #### Data Investigation
 
-There is something suspicious about earnings.
+Comments:
+- We can see lots of outliers for encounters.
+- Is 50 enc/month a realistic average?
+- Is it possible to see ~ 3000 enc/month?
 
-![](output/density_pd.png)
+```{r}
+df = fp |>
+  group_by(pracnum, yearmon, is_LFP) |>
+  summarise(encounters = sum(encounters))
 
+print(summary(df$encounters))
 
-![](output/box_pd.png)
+g1 = df |>
+  ggplot(aes(y=is_LFP, x=encounters, color=is_LFP)) +
+  geom_boxplot() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_x_continuous(labels = label_comma())
+  
+g2 = df |>
+  ggplot(aes(x=encounters, color=is_LFP)) +
+  geom_density() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_x_continuous(labels = label_comma())
 
-Now let's look at encounters.
+g1 + g2
+```
 
-![](output/density_enc.png)
-
-![](output/box_enc.png)
 
 #### Time Series Plots
 
 The red line shows LFP implementation.
+
+```{r}
+fp |>
+  group_by(yearmon, is_LFP) |>
+  summarise(encounters = sum(encounters)) |>
+  ggplot(aes(x=yearmon, y=encounters, color=is_LFP)) +
+  geom_point() +
+  geom_line() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  ggtitle("Total Encounters")
+```
+
+```{r}
+fp |>
+  group_by(pracnum, yearmon, is_LFP) |>
+  summarise(encounters = sum(encounters)) |>
+  group_by(yearmon, is_LFP) |>
+  summarise(encounters = mean(encounters)) |>
+  ggplot(aes(x=yearmon, y=encounters, color=is_LFP)) +
+  geom_point() +
+  geom_line() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  ggtitle("Average Encounters per Prac per Month")
+```
+
+
+
 
 ![](output/ts_enc_plot.png)
 

@@ -1,6 +1,6 @@
-create_policy_dates = function() {
-  tribble(~policy, ~start_date, ~end_date, ~specs, ~anything_else,
-    "LFP", "2023-02-01", NA, as.integer(c(0, 50, 76, 77)), "Family medicine"
+create_policies = function() {
+  tribble(~policy, ~start_date, ~end_date, ~specs, ~comments,
+    "LFP", "2023-02-01", NA, as.integer(c(0, 50, 76, 77)), "Family Medicine"
   ) |>
     mutate(across(c(start_date, end_date), ymd)) |>
     mutate(end_date = replace_na(end_date, as.Date(Inf)))
