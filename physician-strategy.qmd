@@ -30,7 +30,7 @@ params:
 #| results: false
 
 pacman::p_load(targets, hsiaR, tidyverse, reactable, htmltools, scales, patchwork)
-tar_load(c('policies', 'msp', 'vt4', 'fp'))
+tar_load(c('policies', 'encounters_fp', 'vt4'))
 
 nice_gg = function(base_size = 14) {
   ggthemes::theme_clean(base_size) +
@@ -81,7 +81,7 @@ Comments:
 - Is it possible to see ~ 3000 enc/month?
 
 ```{r}
-df = fp |>
+df = encounters_fp |>
   group_by(pracnum, yearmon, is_LFP) |>
   summarise(encounters = sum(encounters))
 
@@ -110,7 +110,7 @@ g1 + g2
 The red line shows LFP implementation.
 
 ```{r}
-fp |>
+encounters_fp |>
   group_by(yearmon, is_LFP) |>
   summarise(encounters = sum(encounters)) |>
   ggplot(aes(x=yearmon, y=encounters, color=is_LFP)) +
@@ -124,7 +124,7 @@ fp |>
 ```
 
 ```{r}
-fp |>
+encounters_fp |>
   group_by(pracnum, yearmon, is_LFP) |>
   summarise(encounters = sum(encounters)) |>
   group_by(yearmon, is_LFP) |>
@@ -140,20 +140,12 @@ fp |>
 ```
 
 
+```{r}
+encounters_fp |> group_by(pracnum, fiscal) |> summarise(encounters = sum(encounters)) |> arrange(pracnum, fiscal)
+filter(vt4, funcspec %in% policies$specs[[1]]) |> select(pracnum, fiscal, msp_encounters)  |> arrange(pracnum, fiscal)
+```
 
 
-![](output/ts_enc_plot.png)
-
-![](output/ts_pracs_plot.png)
-
-![](output/ts_enc_per_prac_plot.png)
-![](output/ts_pd_plot.png)
-
-![](output/ts_pd_per_prac_plot.png)
-
-
-
-This table shows us how many days we have data, before and after the implementation of LFP. We will balance the data so that each side is equal.
 
 
 
