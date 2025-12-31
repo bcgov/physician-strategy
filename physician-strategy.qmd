@@ -3,11 +3,13 @@ title: "Physician Strategy"
 author: "Tim H"
 date: today
 fontfamily: "BC Sans"
+number-sections: true
 format: 
   html:
-    theme: hsiaR_html_style.scss
+    theme: style/hsiaR_style.scss
     toc: true
     code-fold: true
+    fig-width: 10
     lightbox: 
       match: auto
       effect: fade
@@ -22,92 +24,94 @@ execute:
   warning: false
   message: false
   cache: false
-params:
-  ggplot: yes
 ---
+
+# Introduction
 
 ```{r setup}
 #| results: false
 
-pacman::p_load(targets, hsiaR, tidyverse, reactable, htmltools, scales, patchwork)
-tar_load(c('policies', 'encounters_fp', 'vt4'))
+pacman::p_load(targets, hsiaR, tidyverse, reactable, htmltools, scales)
 
-nice_gg = function(base_size = 14) {
+tar_load(c('policies', 'encounters_fp', 'cihi'))
+
+source("R/functions.R")
+
+nice_gg = function(base_size = 16) {
   ggthemes::theme_clean(base_size) +
   ggplot2::theme(legend.position = 'bottom')
 }
-
-#if (!exists("params")) params = list(ggplot = T, echarts = F)
-#echarts4r::e_common(font_family = "BC Sans", theme = "Westeros")
-#source("R/functions.R")
 ```
 
-This table shows some data on the targets for this project.
+This table shows some data on the "raw" targets for this project.
 
 ```{r}
+#| collapse: true
 tar_meta() |>
   select(name, time, bytes, seconds) |>
+  filter(str_ends(name, "_raw")) |>
   arrange(desc(bytes)) |>
   mutate(date = as.Date(time), minutes = round(seconds / 60, 1)) |>
   select(name, date, bytes, minutes) |>
   reactable(bordered = T)
 ```
 
-Here are all the functions we are gonna use:
+
+Here are all the "pull" functions we are gonna use:
 
 ```{r}
-cat(read_lines("R/functions.R"))
+#| collapse: true
+#| 
+print(pull_encounters)
+print(pull_vt4)
 ```
 
 
-## Physicians in Canada
-
-CIHI data?
-
-## MSP
-
-We have MSP encounter data for years: `r sort(unique(msp$fiscal))`. We have VT4 data for years:  `r sort(unique(vt4$fiscal))`
-
-### FPs
+# FPs
 
 In this section, we analyze the impact of the [Longitudinal Family Physician Payment Model (LFP)](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/msp/physicians/longitudinal-family-physician-lfp-payment-model). This affects family doctors (FPs) only; the FPs specs are `r filter(policies, policy=='LFP')$specs[[1]] |> paste(collapse = ", ")`. The LFP model began `r filter(policies, policy=='LFP')$start_date |> format("%B %d, %Y")`. We will use that date as the threshold, although maybe we can get better info as to who is on LFP and who isn't.
 
 
-#### Data Investigation
+## Data Investigation
 
-Comments:
-- We can see lots of outliers for encounters.
-- Is 50 enc/month a realistic average?
-- Is it possible to see ~ 3000 enc/month?
+We have FP encounter data for years: `r cat(sort(unique(encounters_fp$fiscal)), sep = ", ")`.
+
+Here, we show summary statistics for encounters and demonstrate the large right skew.
 
 ```{r}
 df = encounters_fp |>
   group_by(pracnum, yearmon, is_LFP) |>
   summarise(encounters = sum(encounters))
 
-print(summary(df$encounters))
+print(skimr::skim(df$encounters), include_summary = F)
+```
 
-g1 = df |>
+```{r}
+df |>
   ggplot(aes(y=is_LFP, x=encounters, color=is_LFP)) +
   geom_boxplot() +
   nice_gg() +
   scale_colour_viridis_d() +
-  scale_x_continuous(labels = label_comma())
-  
-g2 = df |>
+  scale_x_continuous(labels = label_comma()) +
+  theme(legend.position = 'none') +
+  ggtitle("Boxplot of total encounters per FP")
+```
+
+```{r}
+df |>
   ggplot(aes(x=encounters, color=is_LFP)) +
   geom_density() +
   nice_gg() +
   scale_colour_viridis_d() +
-  scale_x_continuous(labels = label_comma())
-
-g1 + g2
+  scale_x_continuous(labels = label_comma()) +
+  theme(legend.position = 'bottom') +
+  ggtitle("Density plot of total encounters per FP")
 ```
 
 
-#### Time Series Plots
+## Time Series Plots
 
-The red line shows LFP implementation.
+In the following graphs, the vertical red line shows LFP implementation.
 
 ```{r}
 encounters_fp |>
@@ -116,10 +120,14 @@ encounters_fp |>
   ggplot(aes(x=yearmon, y=encounters, color=is_LFP)) +
   geom_point() +
   geom_line() +
+  geom_smooth(method = 'lm', se = F) +
   nice_gg() +
   scale_colour_viridis_d() +
   scale_y_continuous(labels = label_comma()) +
-  geom_vline(xintercept = as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  theme(legend.position = 'none') +
+  labs(x=NULL, y=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
   ggtitle("Total Encounters")
 ```
 
@@ -132,62 +140,118 @@ encounters_fp |>
   ggplot(aes(x=yearmon, y=encounters, color=is_LFP)) +
   geom_point() +
   geom_line() +
+  geom_smooth(method = 'lm', se = F) +
   nice_gg() +
   scale_colour_viridis_d() +
   scale_y_continuous(labels = label_comma()) +
-  geom_vline(xintercept = as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  theme(legend.position = 'none') +
+  labs(x=NULL, y=NULL) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
   ggtitle("Average Encounters per Prac per Month")
 ```
 
+```{r}
+encounters_fp |>
+  group_by(yearmon, is_LFP) |>
+  summarise(n_pracs = n_distinct(pracnum), .groups = 'drop') |>
+  ggplot(aes(x=yearmon, y=n_pracs, color=is_LFP)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(method = 'lm', se = F) +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  theme(legend.position = 'none') +
+  labs(x=NULL, y=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  ggtitle("Distinct Practitioners per Month")
+```
 
 ```{r}
-encounters_fp |> group_by(pracnum, fiscal) |> summarise(encounters = sum(encounters)) |> arrange(pracnum, fiscal)
-filter(vt4, funcspec %in% policies$specs[[1]]) |> select(pracnum, fiscal, msp_encounters)  |> arrange(pracnum, fiscal)
+cihi |>
+  set_names(c("year", "is_LFP", "returned from abroad", "moved abroad", "net migration")) |>
+  pivot_longer(cols = 3:5) |>
+  ggplot(aes(x=year, y=value, color=name)) +
+  geom_line() +
+  geom_point() +
+    nice_gg() +
+  scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  theme(legend.position = 'bottom') +
+  labs(x="year", y="# FPs", color=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  ggtitle("B.C. FP Migration Patterns", "Source = CIHI")
+```
+
+The evidence suggests a behavioural change from LFP implementation. Since LFP, there are fewer FPs, and they are having fewer encounters. There is not enough data to establish whether LFP has affected FP migration patterns.
+
+
+## Hypothesis Tests
+
+### Unpaired mean tests
+
+Here, we test whether the mean of a variable is statistically different before and after the implementation of LFP. These are unpaired tests, so they just test group means and do not account for individual changes. The t-test assumes the variable follows a normal distribution, which does not hold; hence, we include a non-parametric Wilcox test. We will consider three variables: total number of encounters, total count of practitioners, and average number of encounters per practitioner.
+
+```{r}
+vars = c("encounters", "pracs", "encounters_per_prac")
+
+df = encounters_fp |>
+  group_by(yearmon, is_LFP) |>
+  summarise(
+    encounters = sum(encounters),
+    pracs = n_distinct(pracnum),
+    encounters_per_prac = encounters / pracs
+  , .groups = 'drop')
+
+t_unpaired = map(vars, function(var) {
+  t = t.test(reformulate("is_LFP", response = var), data = df) |> 
+    broom::tidy() |>
+    mutate(variable = var, .before = 1) |>
+    mutate(is_significant = p.value < .05, .after=1)
+}) |>
+  bind_rows()
+
+w_unpaired = map(vars, function(var) {
+  t = wilcox.test(reformulate("is_LFP", response = var), data = df) |> 
+    broom::tidy() |>
+    mutate(variable = var, .before = 1) |>
+    mutate(is_significant = p.value < .05, .after=1)
+}) |>
+  bind_rows()
 ```
 
 
+`r reactable(t_unpaired, bordered=T)`\n
+`r reactable(w_unpaired, bordered=T)`
 
+We can conclude that in general there are significant differences before and after LFP.
 
+### Paired mean tests
 
-### Hypothesis Tests
-
-![](output/t_test_plot_encounters.png)
-
-![](output/t_test_plot_all_source_pd.png)
-
-
-```{r}
-#| results: asis
-tar_load(unpaired_tests)
-walk(c('t_test', 'wilcox_test'), function(col) {
-  print(h3("Unpaired test: " %,% col))
-  t = unnest(unpaired_tests, cols = c(col)) |>
-    mutate(across(where(is.double), ~round(., 2))) |>
-    select(-ends_with("_test")) |>
-    reactable(bordered = T)
-  print(tagList(t))
-})
-```
-
-Unpaired tests show significant differences between before and after the LFP.
+In this section, we run paired mean tests. These are specific to individual doctors---we are asking whether individual doctors change their behaviour following LFP. As before, we consider non-parametric tests, since the data are not Gaussian. 
 
 ```{r}
-#| results: asis
-tar_load(paired_tests)
-walk(c('t_test', 'wilcox_test'), function(col) {
-  print(h3("Paired test: " %,% col))
-  t = unnest(paired_tests, cols = c(col)) |>
-    mutate(across(where(is.double), ~round(., 2))) |>
-    select(-ends_with("_test")) |>
-    reactable(bordered = T)
-  print(tagList(t))
-})
+df1 = encounters_fp |>
+  group_by(pracnum, is_LFP) |>
+  summarise(encounters = sum(encounters), .groups = 'drop') |>
+  pivot_wider(names_from = is_LFP, values_from=encounters)
+
+df2 = encounters_fp |>
+  group_by(pracnum, yearmon, is_LFP) |>
+  summarise(encounters = sum(encounters), .groups = 'drop') |>
+  pivot_wider(names_from = is_LFP, values_from=encounters)
+
+t_paired = t.test(df1$`FALSE`, df1$`TRUE`, paired = T) |> 
+  broom::tidy() |>
+  mutate(is_significant = p.value < .05, .after=1)
+
+w_paired = wilcox.test(df1$`FALSE`, df1$`TRUE`, paired = T) |> 
+  broom::tidy() |>
+  mutate(is_significant = p.value < .05, .after=1)
 ```
 
-Paired tests show significant differences between before and after the LFP.
-
-
-```{r}
-fp_trim
-```
-
+`r reactable(t_paired, bordered=T)`\n
+`r reactable(w_paired, bordered=T)`

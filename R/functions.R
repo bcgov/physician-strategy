@@ -14,26 +14,28 @@ create_policies = function() {
     mutate(end_date = replace_na(end_date, as.Date(Inf)))
 }
 
-pull_encounters = function(start_date=params$start_date, end_date=params$end_date) {
-  inner_query = glue::glue("
-  select
-    {hiBuildSQL('select$encounters')}
-  from
-    {hsiaR::hiBuildSQL('from$msp_join')}
-  where
-    servdt between date '{start_date}' and date '{end_date}'
-    and (
-      {hsiaR::hiBuildSQL('where$encounters')}
-    )
-  ")
-  query = glue::glue("
+pull_encounters = function(midpoint = filter(targets::tar_read(policies), policy == "LFP")$start_date) {
+
+  end = floor_date(today(), unit = "month") - 1
+  elapsed = end - midpoint
+  start = floor_date(midpoint - elapsed, "month")
+  # quick covid adjustment
+  start = max(start, as.Date("2020-09-01"))
+
+  inner_query = hiBuildSQL$query$msp_encounters(dates = glue::glue("servdt between date '{start}' and date '{end}'"))
+  query = dplyr::sql(glue::glue("
   SELECT pracnum, servdt, count(clnt_label) as encounters
   FROM (\n{inner_query}\n)
   GROUP BY pracnum, servdt
   ORDER BY 1,2
-  ")
+  "))
   hiQuery(query, con=hiConnect())
 }
+
+pull_vt4 = function() {
+  hiQuery("select * from msea_team_lvl2.vt4 where fiscal > '2019/202'", con=hiConnect())
+}
+
 
 clean_encounters = function(encounters_raw) {
   stopifnot(sum(is.na(encounters_raw)) == 0)
@@ -45,11 +47,6 @@ clean_encounters = function(encounters_raw) {
     mutate(fiscal = as_fiscal(servdt, example_format = "2020/2021"))
 }
 
-pull_vt4 = function(start_date=params$start_date, end_date=params$end_date) {
-  start_date = hsiaR::as_fiscal(start_date, example_format = "2020/2021")
-  end_date = hsiaR::as_fiscal(end_date, example_format = "2020/2021")
-  hiQuery("select * from msea_team_lvl2.vt4 where fiscal between '{start_date}' and '{end_date}'", con=hiConnect())
-}
 
 clean_vt4 = function(vt4_raw) {
   # maybe make these guys factors cuz that's what they are....
@@ -81,5 +78,26 @@ get_encounters_fp = function(encounters, vt4, policies) {
   encounters_fp
 }
 
+pull_cihi = function(file = Sys.getenv("CIHI_PATH")) {
+  readxl::read_excel(file, sheet="Table 1", range = "A3:BH84800") |>
+    rename_with(tolower) |>
+    rename_with(~str_remove_all(., "\\r|\\n|:")) |>
+    rename_with(~str_replace_all(., "/", " ")) |>
+    rename_with(~str_replace_all(., " ", "_")) |>
+    rename_with(~str_replace_all(., fixed("\u2013"), "-")) |> # replace en-dashes -- yes, it matters
+    rename(phys_pop_ratio = 'physician-to-100,000_population_ratio') |>
+    mutate(across(c("year", "specialty_sort", "statistics_canada_population", "net_migration_between_canadian_jurisdictions", starts_with(c("number", "age_group", "place_of", "university_of", "years_since"))), as.integer)) |>
+    mutate(across(c("phys_pop_ratio", starts_with(c("average", "median"))), as.double)) |>
+    mutate(across(c(jurisdiction, health_region, specialty), fct))
+}
 
-
+clean_cihi = function(cihi_raw, policies) {
+  cihi_raw |>
+  filter(
+    jurisdiction == "B.C.",
+    health_region == "B.C.",
+    specialty == "Family medicine"
+  ) |>
+  select(year, number_of_physicians_who_returned_from_abroad, number_of_physicians_who_moved_abroad, net_migration_between_canadian_jurisdictions) |>
+  mutate(is_LFP = between(year, year(policies$start_date), ifelse(is.infinite(policies$end_date), Inf, year(policies$end_date))), .after=1)
+}
