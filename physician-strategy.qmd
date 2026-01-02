@@ -33,7 +33,7 @@ execute:
 
 pacman::p_load(targets, hsiaR, tidyverse, reactable, htmltools, scales)
 
-tar_load(c('policies', 'encounters_fp', 'cihi'))
+tar_load(c('policies', 'encounters_fp', 'cihi', 'vt4', 'vt4_switches'))
 
 source("R/functions.R")
 
@@ -171,12 +171,15 @@ encounters_fp |>
 
 ```{r}
 cihi |>
+  filter(specialty == "Family medicine") |>
+  select(-specialty, -number_of_physicians) |>
+  mutate(is_LFP = between(year, year(policies$start_date), ifelse(is.infinite(policies$end_date), Inf, year(policies$end_date))), .after=1) |>
   set_names(c("year", "is_LFP", "returned from abroad", "moved abroad", "net migration")) |>
   pivot_longer(cols = 3:5) |>
   ggplot(aes(x=year, y=value, color=name)) +
   geom_line() +
   geom_point() +
-    nice_gg() +
+  nice_gg() +
   scale_colour_viridis_d() +
   scale_y_continuous(labels = label_comma()) +
   geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
@@ -185,6 +188,76 @@ cihi |>
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
   ggtitle("B.C. FP Migration Patterns", "Source = CIHI")
 ```
+
+This one doesn't seem to matter. Was trying to suss out hospitalists.
+
+```{r}
+fp_regex = "(?i)family|general practice"
+
+cihi |>
+  filter(str_detect(specialty, fp_regex)) |>
+  filter(str_starts(specialty, "_")) |>
+  mutate(specialty = str_remove_all(specialty, "_")) |>
+  ggplot(aes(x=year, y=number_of_physicians, color=specialty)) +
+  geom_line() +
+  geom_point() +
+  nice_gg() +
+    scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  theme(legend.position = 'bottom') +
+  labs(x="year", y="# FPs", color=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  ggtitle("B.C. FP Migration Patterns", "Source = CIHI")
+```
+
+```{r}
+cihi |>
+  select(year, specialty, number_of_physicians) |>
+  filter(specialty %in% c("All physicians", "Family medicine")) |>
+  pivot_wider(names_from = specialty, values_from = number_of_physicians) |>
+  mutate(perc_fp = `Family medicine` / `All physicians`) |>
+  select(year, perc_fp) |>
+  ggplot(aes(x=year, y=perc_fp)) +
+  geom_line() +
+  geom_point() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_percent()) +
+  geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  theme(legend.position = 'bottom') +
+  labs(x="year", y=NULL, color=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  ggtitle("Percent of total physicians that are FP", "Source = CIHI")
+```
+
+```{r}
+tar_load(vt4_switches)
+
+vt4_switches |>
+  na.omit() |>
+  filter(change != "no_change") |>
+  count(fiscal, is_LFP, change) |>
+  mutate(change = case_match(change,  "fp_switch" ~ "switch within FP", "new_fp" ~ "switch to FP", "new_non_fp" ~ "switch from FP")) |>
+  mutate(year = as.integer(substr(fiscal, 1, 4))) |>
+  ggplot(aes(x=year, y=n, color=change)) +
+  geom_line() +
+  geom_point() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_x_continuous(labels = function(x) paste0(x, "/", x + 1)) +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  theme(legend.position = 'bottom') +
+  labs(x="year", y=NULL, color=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  ggtitle("Switching to and from FP", "Source = VT4")
+
+  
+
+```
+
+
 
 The evidence suggests a behavioural change from LFP implementation. Since LFP, there are fewer FPs, and they are having fewer encounters. There is not enough data to establish whether LFP has affected FP migration patterns.
 
@@ -212,7 +285,9 @@ t_unpaired = map(vars, function(var) {
     mutate(variable = var, .before = 1) |>
     mutate(is_significant = p.value < .05, .after=1)
 }) |>
-  bind_rows()
+  bind_rows() |>
+  select(variable, is_significant, p.value, statistic, conf.low, conf.high) |>
+  mutate(across(where(is.double), ~round(., 2)))
 
 w_unpaired = map(vars, function(var) {
   t = wilcox.test(reformulate("is_LFP", response = var), data = df) |> 
@@ -220,7 +295,10 @@ w_unpaired = map(vars, function(var) {
     mutate(variable = var, .before = 1) |>
     mutate(is_significant = p.value < .05, .after=1)
 }) |>
-  bind_rows()
+  bind_rows() |>
+  select(variable, is_significant, p.value, statistic) |>
+  mutate(across(where(is.double), ~round(., 2)))
+
 ```
 
 
@@ -246,12 +324,18 @@ df2 = encounters_fp |>
 
 t_paired = t.test(df1$`FALSE`, df1$`TRUE`, paired = T) |> 
   broom::tidy() |>
-  mutate(is_significant = p.value < .05, .after=1)
+  mutate(is_significant = p.value < .05, .before=1) |>
+  select(is_significant, p.value, statistic, conf.low, conf.high) |>
+  mutate(across(where(is.double), ~round(., 2)))
 
 w_paired = wilcox.test(df1$`FALSE`, df1$`TRUE`, paired = T) |> 
   broom::tidy() |>
-  mutate(is_significant = p.value < .05, .after=1)
+  mutate(is_significant = p.value < .05, .after=1) |>
+  select(is_significant, p.value, statistic) |>
+  mutate(across(where(is.double), ~round(., 2)))
 ```
 
 `r reactable(t_paired, bordered=T)`\n
 `r reactable(w_paired, bordered=T)`
+
+

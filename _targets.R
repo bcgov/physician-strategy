@@ -22,7 +22,9 @@ plan = append(plan, list(
   tar_target(vt4, clean_vt4(vt4_raw)),
   tar_target(encounters_fp, get_encounters_fp(encounters, vt4, policies)),
   tar_target(cihi_raw, pull_cihi(file = Sys.getenv("CIHI_PATH"))),
-  tar_target(cihi, clean_cihi(cihi_raw, policies))
+  tar_target(cihi, clean_cihi(cihi_raw, policies)),
+
+  tar_target(vt4_switches, create_vt4_switches(vt4, policies))
 ))
 
 plan

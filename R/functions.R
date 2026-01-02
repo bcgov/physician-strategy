@@ -95,9 +95,28 @@ clean_cihi = function(cihi_raw, policies) {
   cihi_raw |>
   filter(
     jurisdiction == "B.C.",
-    health_region == "B.C.",
-    specialty == "Family medicine"
+    health_region == "B.C."
   ) |>
-  select(year, number_of_physicians_who_returned_from_abroad, number_of_physicians_who_moved_abroad, net_migration_between_canadian_jurisdictions) |>
-  mutate(is_LFP = between(year, year(policies$start_date), ifelse(is.infinite(policies$end_date), Inf, year(policies$end_date))), .after=1)
+  select(year, specialty, number_of_physicians, number_of_physicians_who_returned_from_abroad, number_of_physicians_who_moved_abroad, net_migration_between_canadian_jurisdictions)
+}
+
+create_vt4_switches = function(vt4, policies) {
+  vt4 |>
+    mutate(is_LFP = between(as.integer(substr(fiscal, 1, 4)), year(policies$start_date), ifelse(is.infinite(policies$end_date), Inf, year(policies$end_date))), .after=1) |>
+    mutate(is_fp = funcspec %in% policies$specs[[1]]) |>
+    select(is_fp, is_LFP, pracnum, fiscal, funcspec) |>
+    arrange(pracnum, fiscal) |>
+    group_by(pracnum) |>
+    mutate(lag_funcspec = lag(funcspec)) |>
+    mutate(lag_is_fp = lag(is_fp)) |>
+    mutate(change = case_when(
+      is.na(lag_funcspec) ~ NA,
+      funcspec == lag_funcspec ~ 'no_change',
+      !is_fp & !lag_is_fp ~ 'no_change',
+      is_fp & !lag_is_fp ~ 'new_fp',
+      !is_fp & lag_is_fp ~ 'new_non_fp',
+      is_fp & (funcspec != lag_funcspec) ~ 'fp_switch',
+      T ~ 'other'
+    )) |>
+    ungroup()
 }
