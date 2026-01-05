@@ -14,22 +14,33 @@ create_policies = function() {
     mutate(end_date = replace_na(end_date, as.Date(Inf)))
 }
 
-pull_encounters = function(midpoint = filter(targets::tar_read(policies), policy == "LFP")$start_date) {
+pull_msp = function(midpoint = filter(targets::tar_read(policies), policy == "LFP")$start_date) {
 
   end = floor_date(today(), unit = "month") - 1
   elapsed = end - midpoint
   start = floor_date(midpoint - elapsed, "month")
+
   # quick covid adjustment
   start = max(start, as.Date("2020-09-01"))
 
-  inner_query = hiBuildSQL$query$msp_encounters(dates = glue::glue("servdt between date '{start}' and date '{end}'"))
+  #inner_query = hiBuildSQL$query$msp_encounters(dates = glue::glue("servdt between date '{start}' and date '{end}'"))
+
+
+  # for now we use paidserv but ask Duncan
+  inner_query = dplyr::sql(paste("select", hiBuildSQL$select$encounters, ",\npaidserv", "\nfrom", hiBuildSQL$from$msp_join, glue::glue("\nwhere servdt between date '{start}' and date '{end}' and"), hiBuildSQL$where$msp_encounters
+  ))
+
+  #browser()
+  #hiBuildSQL$query$msp_encounters("where servdt between date '{start}' and date '{end}'")
+
   query = dplyr::sql(glue::glue("
-  SELECT pracnum, servdt, count(clnt_label) as encounters
+  SELECT pracnum, servdt, count(clnt_label) as encounters, sum(paidserv) as paidserv
   FROM (\n{inner_query}\n)
   GROUP BY pracnum, servdt
   ORDER BY 1,2
   "))
-  hiQuery(query, con=hiConnect())
+
+  hiQuery(query, run_query = T, con=hiConnect())
 }
 
 pull_vt4 = function() {
@@ -37,10 +48,10 @@ pull_vt4 = function() {
 }
 
 
-clean_encounters = function(encounters_raw) {
-  stopifnot(sum(is.na(encounters_raw)) == 0)
+clean_msp = function(msp_raw) {
+  stopifnot(sum(is.na(msp_raw)) == 0)
 
-  encounters_raw |>
+  msp_raw |>
     mutate(encounters = as.integer(encounters)) |>
     mutate(servdt = as.Date(servdt)) |>
     mutate(yearmon = zoo::as.yearmon(servdt)) |>
@@ -56,7 +67,7 @@ clean_vt4 = function(vt4_raw) {
     mutate(across(c(funcspec), ~fct_inseq(as.character(.))))
 }
 
-get_encounters_fp = function(encounters, vt4, policies) {
+get_msp_fp = function(msp, vt4, policies) {
   fp_specs = policies |>
     filter(policy == "LFP") |>
     pull(specs) |>
@@ -66,16 +77,16 @@ get_encounters_fp = function(encounters, vt4, policies) {
     filter(funcspec %in% fp_specs) |>
     select(pracnum, fiscal, funcspec, ha_cd, prac_age, prac_gender)
 
-  encounters_fp = inner_join(encounters, vt4_fps, by=join_by(pracnum, fiscal)) |>
+  msp_fp = inner_join(msp, vt4_fps, by=join_by(pracnum, fiscal)) |>
     mutate(is_LFP = between(servdt, policies$start_date, policies$end_date))
 
   stopifnot(
-    encounters_fp |>
+    msp_fp |>
       count(pracnum, servdt) |>
       pull(n) |>
       unique() == 1
   )
-  encounters_fp
+  msp_fp
 }
 
 pull_cihi = function(file = Sys.getenv("CIHI_PATH")) {

@@ -11,16 +11,16 @@ plan = list()
 
 if (params$pull_from_Oracle) {
   plan = append(plan, list(
-    tar_target(encounters_raw, pull_encounters(midpoint = filter(policies, policy == "LFP")$start_date)),
+    tar_target(msp_raw, pull_msp(midpoint = filter(policies, policy == "LFP")$start_date)),
     tar_target(vt4_raw, pull_vt4()))
   )
 }
 
 plan = append(plan, list(
   tar_target(policies, create_policies()),
-  tar_target(encounters, clean_encounters(encounters_raw)),
+  tar_target(msp, clean_msp(msp_raw)),
   tar_target(vt4, clean_vt4(vt4_raw)),
-  tar_target(encounters_fp, get_encounters_fp(encounters, vt4, policies)),
+  tar_target(msp_fp, get_msp_fp(msp, vt4, policies)),
   tar_target(cihi_raw, pull_cihi(file = Sys.getenv("CIHI_PATH"))),
   tar_target(cihi, clean_cihi(cihi_raw, policies)),
 

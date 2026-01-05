@@ -33,7 +33,7 @@ execute:
 
 pacman::p_load(targets, hsiaR, tidyverse, reactable, htmltools, scales)
 
-tar_load(c('policies', 'encounters_fp', 'cihi', 'vt4', 'vt4_switches'))
+tar_load(c('policies', 'msp_fp', 'cihi', 'vt4', 'vt4_switches'))
 
 source("R/functions.R")
 
@@ -62,7 +62,7 @@ Here are all the "pull" functions we are gonna use:
 ```{r}
 #| collapse: true
 #| 
-print(pull_encounters)
+print(pull_msp)
 print(pull_vt4)
 ```
 
@@ -72,21 +72,29 @@ print(pull_vt4)
 In this section, we analyze the impact of the [Longitudinal Family Physician Payment Model (LFP)](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/msp/physicians/longitudinal-family-physician-lfp-payment-model). This affects family doctors (FPs) only; the FPs specs are `r filter(policies, policy=='LFP')$specs[[1]] |> paste(collapse = ", ")`. The LFP model began `r filter(policies, policy=='LFP')$start_date |> format("%B %d, %Y")`. We will use that date as the threshold, although maybe we can get better info as to who is on LFP and who isn't.
 
 
-## Data Investigation
+## Data
 
-We have FP encounter data for years: `r cat(sort(unique(encounters_fp$fiscal)), sep = ", ")`.
+We have FP encounter data for years: `r cat(sort(unique(msp_fp$fiscal)), sep = ", ")`.
 
 Here, we show summary statistics for encounters and demonstrate the large right skew.
 
 ```{r}
-df = encounters_fp |>
+msp_fp |>
+  group_by(is_LFP, yearmon) |>
+  summarise(mean = round(mean(encounters)), sum = sum(encounters)) |>
+  mutate(across(where(is.numeric), label_comma())) |>
+  mutate(yearmon = as.character(yearmon)) |>
+  reactable()
+```
+
+
+```{r}
+df = msp_fp |>
   group_by(pracnum, yearmon, is_LFP) |>
   summarise(encounters = sum(encounters))
 
 print(skimr::skim(df$encounters), include_summary = F)
-```
 
-```{r}
 df |>
   ggplot(aes(y=is_LFP, x=encounters, color=is_LFP)) +
   geom_boxplot() +
@@ -94,10 +102,9 @@ df |>
   scale_colour_viridis_d() +
   scale_x_continuous(labels = label_comma()) +
   theme(legend.position = 'none') +
-  ggtitle("Boxplot of total encounters per FP")
-```
+  ggtitle("Boxplot of total encounters per FP") |>
+  print()
 
-```{r}
 df |>
   ggplot(aes(x=encounters, color=is_LFP)) +
   geom_density() +
@@ -105,7 +112,8 @@ df |>
   scale_colour_viridis_d() +
   scale_x_continuous(labels = label_comma()) +
   theme(legend.position = 'bottom') +
-  ggtitle("Density plot of total encounters per FP")
+  ggtitle("Density plot of total encounters per FP") |>
+  print()
 ```
 
 
@@ -114,7 +122,7 @@ df |>
 In the following graphs, the vertical red line shows LFP implementation.
 
 ```{r}
-encounters_fp |>
+msp_fp |>
   group_by(yearmon, is_LFP) |>
   summarise(encounters = sum(encounters)) |>
   ggplot(aes(x=yearmon, y=encounters, color=is_LFP)) +
@@ -132,7 +140,7 @@ encounters_fp |>
 ```
 
 ```{r}
-encounters_fp |>
+msp_fp |>
   group_by(pracnum, yearmon, is_LFP) |>
   summarise(encounters = sum(encounters)) |>
   group_by(yearmon, is_LFP) |>
@@ -152,7 +160,7 @@ encounters_fp |>
 ```
 
 ```{r}
-encounters_fp |>
+msp_fp |>
   group_by(yearmon, is_LFP) |>
   summarise(n_pracs = n_distinct(pracnum), .groups = 'drop') |>
   ggplot(aes(x=yearmon, y=n_pracs, color=is_LFP)) +
@@ -271,7 +279,7 @@ Here, we test whether the mean of a variable is statistically different before a
 ```{r}
 vars = c("encounters", "pracs", "encounters_per_prac")
 
-df = encounters_fp |>
+df = msp_fp |>
   group_by(yearmon, is_LFP) |>
   summarise(
     encounters = sum(encounters),
@@ -302,7 +310,8 @@ w_unpaired = map(vars, function(var) {
 ```
 
 
-`r reactable(t_unpaired, bordered=T)`\n
+`r reactable(t_unpaired, bordered=T)`
+
 `r reactable(w_unpaired, bordered=T)`
 
 We can conclude that in general there are significant differences before and after LFP.
@@ -312,12 +321,12 @@ We can conclude that in general there are significant differences before and aft
 In this section, we run paired mean tests. These are specific to individual doctors---we are asking whether individual doctors change their behaviour following LFP. As before, we consider non-parametric tests, since the data are not Gaussian. 
 
 ```{r}
-df1 = encounters_fp |>
+df1 = msp_fp |>
   group_by(pracnum, is_LFP) |>
   summarise(encounters = sum(encounters), .groups = 'drop') |>
   pivot_wider(names_from = is_LFP, values_from=encounters)
 
-df2 = encounters_fp |>
+df2 = msp_fp |>
   group_by(pracnum, yearmon, is_LFP) |>
   summarise(encounters = sum(encounters), .groups = 'drop') |>
   pivot_wider(names_from = is_LFP, values_from=encounters)
@@ -335,7 +344,8 @@ w_paired = wilcox.test(df1$`FALSE`, df1$`TRUE`, paired = T) |>
   mutate(across(where(is.double), ~round(., 2)))
 ```
 
-`r reactable(t_paired, bordered=T)`\n
+`r reactable(t_paired, bordered=T)`
+
 `r reactable(w_paired, bordered=T)`
 
 
