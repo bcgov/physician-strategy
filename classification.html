@@ -1052,8 +1052,8 @@ margin-right: 0; }
 
 
 <section>
-<section id="classification-plan" class="title-slide slide level1 center">
-<h1>Classification Plan</h1>
+<section id="fitm-classification-plan" class="title-slide slide level1 center">
+<h1>FITM Classification Plan</h1>
 <p>Tim</p>
 <p>2026-01-07</p>
 </section>
@@ -1093,16 +1093,16 @@ margin-right: 0; }
 <pre><code># A tibble: 10 × 8
     fitm fitmdesc       fitmdsc1 fitmdsc2 fitmdsc3 highuse ins_r_cd virtual_flag
    &lt;dbl&gt; &lt;chr&gt;          &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;       
- 1  9364 URINALYSIS, M… URINALY… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 2 91145 ANTICARDIOLIP… Anticar… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 3 91400 COPPER - SERUM COPPER … &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 4 11963 OXIMETRY REST… OXIMETR… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 5  6170 THOMPSON PROC… TREATME… (TOTAL … &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 6 33074 PERC TRANSCAT… PERCUTA… OVER 18… NOTES:   N       &lt;NA&gt;     &lt;NA&gt;        
- 7  9061 HEMOGLOBIN A2… HEMOGLO… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 8  8123 EXTRA-CORPORE… Extra-c… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 9 28071 TOOTH TRANSPL… TOOTH T… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
-10 27246 SURFACE OSSEO… SURFACE… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        </code></pre>
+ 1  3235 CORTICAL LOCA… INTRAOP… STIMULA… &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
+ 2  8632 RADIOLOGY ASS… RADIOLO… NOTE:    08632 A… N       &lt;NA&gt;     &lt;NA&gt;        
+ 3 96706 APB DIRECTIVE… APB CON… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
+ 4 19773 WORKSAFEBC RE… WORKSAF… &lt;NA&gt;     &lt;NA&gt;     &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;        
+ 5 22011 TELEHEALTH RE… TELEHEA… WHERE A… WITHIN … N       &lt;NA&gt;     Full Virtua…
+ 6 36229 NP-IMMUNIZATI… NP - IM… NOTES:   I)   FO… N       &lt;NA&gt;     &lt;NA&gt;        
+ 7  9998 ORTHODONTIA M… ORTHODO… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
+ 8 36297 NP-INSERTION … INSERTI… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
+ 9 36330 NP-INDIVIDUAL… INDIVID… FOR A P… NOTE: M… N       &lt;NA&gt;     &lt;NA&gt;        
+10  1033 NERVE BLOCK S… NERVE B… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        </code></pre>
 </div>
 </div>
 </section>
@@ -1154,18 +1154,18 @@ margin-right: 0; }
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href></a>fitm_class <span class="sc">|&gt;</span> <span class="fu">filter</span>(fitm_class <span class="sc">!=</span> <span class="st">&quot;unknown&quot;</span>) <span class="sc">|&gt;</span> <span class="fu">slice_sample</span>(<span class="at">n =</span> <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 3
-    fitm fitmdesc                                           fitm_class     
-   &lt;dbl&gt; &lt;chr&gt;                                              &lt;chr&gt;          
- 1  3684 MAXILLARY OSTEOTOMIES OTHER THAN SEGMENTAL         mental health  
- 2 19547 WORKSAFEBC EXPEDITED SURGICAL ASSIST - LEVEL 3     surgical assist
- 3 97603 PCN ATTACH RPT: BURNABY-METROTOWN                  not a visit    
- 4 96902 APB SPECIALIST TELEPHONE ADVICE - ONE WEEK         advice         
- 5   771 RETINAL EXAMINATION UNDER ANAESTHESIA              anaesthesia    
- 6 97605 PCN ATTACH RPT: BURNABY-BRENTWOOD/HASTINGS         not a visit    
- 7 97659 PCN ATTACH RPT: SHUSWAP NORTH OKANAGAN             not a visit    
- 8  3658 SEGMENTAL OSTEOTOMY-TOTAL ALVEOLAR OSTEOTOMY OF    mental health  
- 9   216 ELECTOSURGERY, CRYOTHERAPY FOR REMOVAL WARTS ETC.  dermatology    
-10 14077 FP CONFERENCE WITH ALLIED CARE PROVIDER AND/OR PHY advice         </code></pre>
+    fitm fitmdesc                                           fitm_class   
+   &lt;dbl&gt; &lt;chr&gt;                                              &lt;chr&gt;        
+ 1 97558 ENCOUNTER CODE - NP MENTAL HEALTH CARE             mental health
+ 2  8633 RADIOLOGY ASSISTANT FEE - EACH 15 MIN AFTER 1 HOUR not a visit  
+ 3 33305 EMERGENCY VISIT-GASTROENTEROLOGY                   emergency    
+ 4 98261 LFP LOCUM INPATIENT URGENT ASSESSMENT              not a visit  
+ 5   224 ULTRA VIOLET B TREATMENT, WHOLE OR PARTIAL BODY    dermatology  
+ 6  3656 SEGMENTAL OSTEOTOMY - SECOND SEGMENT               mental health
+ 7  1172 ANAES. INTENSITY/COMPLEXITY LEVEL 2 - PER 15 MINS  not a visit  
+ 8  1018 EMERGENCY AT NIGHT, ANAESTHESIA                    emergency    
+ 9  1831 LEVEL I EMERGENCY CARE - NIGHT                     emergency    
+10  1036 EPIDURAL BLOCKS: THORACIC                          anaesthesia  </code></pre>
 </div>
 </div>
 </section>
@@ -1213,7 +1213,7 @@ margin-right: 0; }
 <span id="cb12-2"><a href></a><span class="st">msp.pracnum,</span></span>
 <span id="cb12-3"><a href></a><span class="st">trunc(servdt) as servdt,</span></span>
 <span id="cb12-4"><a href></a><span class="st">clnt.mrg_clnt_anon_idnt_id as clnt_label,</span></span>
-<span id="cb12-5"><a href></a><span class="st">pr.func_spty_cd,</span></span>
+<span id="cb12-5"><a href></a><span class="st">pr.func_spty_cd func_spty_cd,</span></span>
 <span id="cb12-6"><a href></a><span class="st">fitm.fitm,</span></span>
 <span id="cb12-7"><a href></a><span class="st">fitm.fitm_class</span></span>
 <span id="cb12-8"><a href></a><span class="st">&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1223,8 +1223,8 @@ margin-right: 0; }
 <h2>hiBuildSQL</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href></a>hiBuildSQL<span class="sc">$</span>query<span class="sc">$</span>msp_encounters <span class="ot">=</span> <span class="cf">function</span>(</span>
-<span id="cb13-2"><a href></a>    <span class="at">start =</span> lubridate<span class="sc">::</span><span class="fu">today</span>() <span class="sc">-</span> <span class="fu">months</span>(<span class="dv">3</span>), </span>
-<span id="cb13-3"><a href></a>    <span class="at">end =</span> lubridate<span class="sc">::</span><span class="fu">today</span>() <span class="sc">-</span> <span class="fu">months</span>(<span class="dv">3</span>) <span class="sc">-</span> <span class="fu">years</span>(<span class="dv">5</span>)) {</span>
+<span id="cb13-2"><a href></a>    <span class="at">start =</span> lubridate<span class="sc">::</span><span class="fu">today</span>() <span class="sc">-</span> <span class="fu">months</span>(<span class="dv">3</span>) <span class="sc">-</span> <span class="fu">years</span>(<span class="dv">5</span>), </span>
+<span id="cb13-3"><a href></a>    <span class="at">end =</span> lubridate<span class="sc">::</span><span class="fu">today</span>() <span class="sc">-</span> <span class="fu">months</span>(<span class="dv">3</span>)) {</span>
 <span id="cb13-4"><a href></a>  <span class="fu">paste0</span>(</span>
 <span id="cb13-5"><a href></a>    hsiaR<span class="sc">:::</span><span class="fu">glue_wrapper</span>(<span class="st">&quot;</span></span>
 <span id="cb13-6"><a href></a><span class="st">      select distinct {hiBuildSQL$select$msp_encounters}</span></span>
@@ -1247,7 +1247,7 @@ margin-right: 0; }
 msp.pracnum,
 trunc(servdt) as servdt,
 clnt.mrg_clnt_anon_idnt_id as clnt_label,
-pr.func_spty_cd,
+pr.func_spty_cd func_spty_cd,
 fitm.fitm,
 fitm.fitm_class
 
@@ -1259,7 +1259,7 @@ left join ahip.cb_dtl_dm_srv_date_vw dt ON msp.servdt = dt.srv_date
 left join msea_team_lvl2.fitm_class fitm on msp.fitm=fitm.fitm
 left join ahip.CB_DTL_FT_PRACRSTFYR_VWD pr on dt.SRV_FISC_YR=pr.FISC_YR and msp.pracnum=PRAC_BLLG_NUM
 where
-servdt between date &#39;2025-10-08&#39; and date &#39;2020-10-08&#39; and (
+servdt between date &#39;2020-10-08&#39; and date &#39;2025-10-08&#39; and (
   pracnum is not null
   and (clmtp in (&#39;MM&#39;,&#39;MA&#39;,&#39;MB&#39;,&#39;MH&#39;,&#39;MN&#39;,&#39;MS&#39;,&#39;PM&#39;) or (servcd=13 and clmtp = &#39;PB&#39;))
   and not msp.fitm in (15501,15601)
@@ -1312,17 +1312,25 @@ order by 1,2,3</code></pre>
 <pre><code># A tibble: 10 × 6
    pracnum servdt              clnt_label          func_spty_cd  fitm fitm_class
    &lt;chr&gt;   &lt;dttm&gt;              &lt;chr&gt;               &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;     
- 1 59987   2025-01-02 00:00:00 2727659980559847593 14           50517 unknown   
- 2 58406   2025-01-03 00:00:00 1480555857636333304 00           13194 surgical …
- 3 68529   2025-01-03 00:00:00 3081316852655949324 15            8679 unknown   
- 4 87488   2025-01-03 00:00:00 2771892141390043250 39            2899 unknown   
- 5 25559   2025-01-03 00:00:00 638103236791115689  00           98032 not a vis…
- 6 87576   2025-01-02 00:00:00 188847961490006488  39            2882 unknown   
- 7 62130   2025-01-03 00:00:00 3582528532633894420 00           97405 unknown   
- 8 J2242   2025-01-02 00:00:00 2348381830327712539 10           10001 advice    
- 9 63234   2025-01-02 00:00:00 394406068163016001  00           98032 not a vis…
-10 65585   2025-01-03 00:00:00 2834991586717000188 49             940 unknown   </code></pre>
+ 1 J6925   2025-01-02 00:00:00 3363442678492701878 09            3011 unknown   
+ 2 59282   2025-01-02 00:00:00 3279559514158542662 00             100 unknown   
+ 3 30818   2025-01-03 00:00:00 3699275853164424485 00           98032 not a vis…
+ 4 59235   2025-01-02 00:00:00 1680000470706832581 00           98032 not a vis…
+ 5 26193   2025-01-02 00:00:00 3638579963125578517 01           13637 unknown   
+ 6 28760   2025-01-02 00:00:00 867634323410079663  06           22067 unknown   
+ 7 44077   2025-01-02 00:00:00 3743636030086514570 00           98032 not a vis…
+ 8 J1700   2025-01-02 00:00:00 2000324183099269233 00           98031 not a vis…
+ 9 88290   2025-01-03 00:00:00 2868791351768122402 39            2882 unknown   
+10 82634   2025-01-03 00:00:00 1415498844229336684 11           51016 unknown   </code></pre>
 </div>
+</div>
+</section>
+<section id="clean" class="slide level2">
+<h2>Clean</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href></a>msp_encounters <span class="ot">=</span> msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb18-2"><a href></a>  <span class="fu">mutate</span>(<span class="at">servdt =</span> <span class="fu">as.Date</span>(servdt)) <span class="sc">|&gt;</span></span>
+<span id="cb18-3"><a href></a>  <span class="fu">mutate</span>(<span class="at">func_spty_cd =</span> <span class="fu">as.integer</span>(func_spty_cd))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section></section>
 <section>
@@ -1345,22 +1353,22 @@ order by 1,2,3</code></pre>
 <section id="counts-per-day" class="slide level2">
 <h2>Counts per day</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
-<span id="cb18-2"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb19-2"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 26,241 × 5
-   pracnum func_spty_cd servdt              fitm_class      n
-   &lt;chr&gt;   &lt;chr&gt;        &lt;dttm&gt;              &lt;chr&gt;       &lt;int&gt;
- 1 00007   18           2025-01-02 00:00:00 anaesthesia     8
- 2 00007   18           2025-01-03 00:00:00 anaesthesia     6
- 3 00007   18           2025-01-03 00:00:00 not a visit     4
- 4 00008   03           2025-01-02 00:00:00 unknown        12
- 5 00008   03           2025-01-03 00:00:00 unknown         9
- 6 00011   00           2025-01-01 00:00:00 advice         17
- 7 00011   00           2025-01-02 00:00:00 advice         19
- 8 00011   00           2025-01-02 00:00:00 unknown        50
- 9 00011   00           2025-01-03 00:00:00 advice         22
-10 00011   00           2025-01-03 00:00:00 unknown        63
+   pracnum func_spty_cd servdt     fitm_class      n
+   &lt;chr&gt;          &lt;int&gt; &lt;date&gt;     &lt;chr&gt;       &lt;int&gt;
+ 1 00007             18 2025-01-02 anaesthesia     8
+ 2 00007             18 2025-01-03 anaesthesia     6
+ 3 00007             18 2025-01-03 not a visit     4
+ 4 00008              3 2025-01-02 unknown        12
+ 5 00008              3 2025-01-03 unknown         9
+ 6 00011              0 2025-01-01 advice         17
+ 7 00011              0 2025-01-02 advice         19
+ 8 00011              0 2025-01-02 unknown        50
+ 9 00011              0 2025-01-03 advice         22
+10 00011              0 2025-01-03 unknown        63
 # ℹ 26,231 more rows</code></pre>
 </div>
 </div>
@@ -1368,49 +1376,170 @@ order by 1,2,3</code></pre>
 <section id="example-22895" class="slide level2">
 <h2>Example: 22895</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
-<span id="cb20-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
-<span id="cb20-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 13 × 5
-   pracnum func_spty_cd servdt              fitm_class        n
-   &lt;chr&gt;   &lt;chr&gt;        &lt;dttm&gt;              &lt;chr&gt;         &lt;int&gt;
- 1 22895   00           2025-01-01 00:00:00 advice            4
- 2 22895   00           2025-01-01 00:00:00 emergency        22
- 3 22895   00           2025-01-01 00:00:00 mental health     2
- 4 22895   00           2025-01-01 00:00:00 unknown           4
- 5 22895   00           2025-01-02 00:00:00 emergency        23
- 6 22895   00           2025-01-02 00:00:00 mental health     1
- 7 22895   00           2025-01-02 00:00:00 not a visit      21
- 8 22895   00           2025-01-02 00:00:00 unknown           5
- 9 22895   00           2025-01-03 00:00:00 advice            2
-10 22895   00           2025-01-03 00:00:00 emergency        17
-11 22895   00           2025-01-03 00:00:00 mental health     8
-12 22895   00           2025-01-03 00:00:00 not a visit      11
-13 22895   00           2025-01-03 00:00:00 unknown          11</code></pre>
+   pracnum func_spty_cd servdt     fitm_class        n
+   &lt;chr&gt;          &lt;int&gt; &lt;date&gt;     &lt;chr&gt;         &lt;int&gt;
+ 1 22895              0 2025-01-01 advice            4
+ 2 22895              0 2025-01-01 emergency        22
+ 3 22895              0 2025-01-01 mental health     2
+ 4 22895              0 2025-01-01 unknown           4
+ 5 22895              0 2025-01-02 emergency        23
+ 6 22895              0 2025-01-02 mental health     1
+ 7 22895              0 2025-01-02 not a visit      21
+ 8 22895              0 2025-01-02 unknown           5
+ 9 22895              0 2025-01-03 advice            2
+10 22895              0 2025-01-03 emergency        17
+11 22895              0 2025-01-03 mental health     8
+12 22895              0 2025-01-03 not a visit      11
+13 22895              0 2025-01-03 unknown          11</code></pre>
 </div>
 </div>
 </section>
 <section id="example-22895-1" class="slide level2">
 <h2>Example: 22895</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
-<span id="cb22-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
-<span id="cb22-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
-<span id="cb22-4"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb22-5"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
-<span id="cb22-6"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
-<span id="cb22-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> fitm_class, <span class="at">values_from =</span> perc) <span class="sc">|&gt;</span></span>
-<span id="cb22-8"><a href></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="dv">4</span><span class="sc">:</span><span class="fu">last_col</span>(), <span class="sc">~</span><span class="fu">replace_na</span>(., <span class="dv">0</span>))) <span class="sc">|&gt;</span></span>
-<span id="cb22-9"><a href></a>  <span class="fu">mutate</span>(<span class="at">servdt =</span> <span class="fu">as.Date</span>(servdt))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb23-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
+<span id="cb23-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb23-4"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb23-5"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
+<span id="cb23-6"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
+<span id="cb23-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> fitm_class, <span class="at">values_from =</span> perc) <span class="sc">|&gt;</span></span>
+<span id="cb23-8"><a href></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="dv">4</span><span class="sc">:</span><span class="fu">last_col</span>(), <span class="sc">~</span><span class="fu">replace_na</span>(., <span class="dv">0</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 8
   pracnum func_spty_cd servdt     advice emergency `mental health` unknown
-  &lt;chr&gt;   &lt;chr&gt;        &lt;date&gt;      &lt;dbl&gt;     &lt;dbl&gt;           &lt;dbl&gt;   &lt;dbl&gt;
-1 22895   00           2025-01-01 0.125      0.688          0.0625   0.125
-2 22895   00           2025-01-02 0          0.46           0.02     0.1  
-3 22895   00           2025-01-03 0.0408     0.347          0.163    0.224
+  &lt;chr&gt;          &lt;int&gt; &lt;date&gt;      &lt;dbl&gt;     &lt;dbl&gt;           &lt;dbl&gt;   &lt;dbl&gt;
+1 22895              0 2025-01-01 0.125      0.688          0.0625   0.125
+2 22895              0 2025-01-02 0          0.46           0.02     0.1  
+3 22895              0 2025-01-03 0.0408     0.347          0.163    0.224
 # ℹ 1 more variable: `not a visit` &lt;dbl&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="example-22895-with-running-totals" class="slide level2">
+<h2>Example: 22895 with running totals</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb25-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb25-4"><a href></a>  <span class="fu">group_by</span>(pracnum, func_spty_cd, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb25-5"><a href></a>  <span class="fu">arrange</span>(servdt) <span class="sc">|&gt;</span></span>
+<span id="cb25-6"><a href></a>  <span class="fu">mutate</span>(<span class="at">n =</span> <span class="fu">cumsum</span>(n)) <span class="sc">|&gt;</span></span>
+<span id="cb25-7"><a href></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb25-8"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-9"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
+<span id="cb25-10"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
+<span id="cb25-11"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> fitm_class, <span class="at">values_from =</span> perc) <span class="sc">|&gt;</span></span>
+<span id="cb25-12"><a href></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="dv">4</span><span class="sc">:</span><span class="fu">last_col</span>(), <span class="sc">~</span><span class="fu">replace_na</span>(., <span class="dv">0</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 8
+  pracnum func_spty_cd servdt     advice emergency `mental health` unknown
+  &lt;chr&gt;          &lt;int&gt; &lt;date&gt;      &lt;dbl&gt;     &lt;dbl&gt;           &lt;dbl&gt;   &lt;dbl&gt;
+1 22895              0 2025-01-01 0.125      0.688          0.0625   0.125
+2 22895              0 2025-01-02 0          0.577          0.0385   0.115
+3 22895              0 2025-01-03 0.0458     0.473          0.0840   0.153
+# ℹ 1 more variable: `not a visit` &lt;dbl&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="classifier-by-prac" class="slide level2">
+<h2>Classifier by prac</h2>
+<ul>
+<li>ML?</li>
+<li>By day? By month? By year?</li>
+</ul>
+</section>
+<section id="make-the-table" class="slide level2">
+<h2>Make the table</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href></a>prac_class <span class="ot">=</span> msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb27-2"><a href></a>  <span class="fu">mutate</span>(<span class="at">fitm_class =</span> <span class="fu">str_replace_all</span>(fitm_class, <span class="st">&quot; &quot;</span>, <span class="st">&quot;_&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb27-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb27-4"><a href></a>  <span class="fu">group_by</span>(pracnum, func_spty_cd, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb27-5"><a href></a>  <span class="fu">arrange</span>(servdt) <span class="sc">|&gt;</span></span>
+<span id="cb27-6"><a href></a>  <span class="fu">mutate</span>(<span class="at">n =</span> <span class="fu">cumsum</span>(n)) <span class="sc">|&gt;</span></span>
+<span id="cb27-7"><a href></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb27-8"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb27-9"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
+<span id="cb27-10"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
+<span id="cb27-11"><a href></a>  <span class="fu">arrange</span>(pracnum, func_spty_cd, servdt, <span class="fu">desc</span>(perc))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="top-class" class="slide level2">
+<h2>Top class?</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href></a>prac_class <span class="sc">|&gt;</span></span>
+<span id="cb28-2"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt) <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 20,856 × 5
+# Groups:   pracnum, servdt [20,856]
+   pracnum func_spty_cd servdt     fitm_class   perc
+   &lt;chr&gt;          &lt;int&gt; &lt;date&gt;     &lt;chr&gt;       &lt;dbl&gt;
+ 1 00007             18 2025-01-02 anaesthesia 1    
+ 2 00007             18 2025-01-03 anaesthesia 0.778
+ 3 00008              3 2025-01-02 unknown     1    
+ 4 00008              3 2025-01-03 unknown     1    
+ 5 00011              0 2025-01-01 advice      1    
+ 6 00011              0 2025-01-02 unknown     0.581
+ 7 00011              0 2025-01-03 unknown     0.661
+ 8 00016             26 2025-01-02 unknown     1    
+ 9 00016             26 2025-01-03 unknown     0.977
+10 00030              0 2025-01-03 not_a_visit 1    
+# ℹ 20,846 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="top-2-classes" class="slide level2">
+<h2>Top 2 classes?</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href></a>prac_class <span class="sc">|&gt;</span></span>
+<span id="cb30-2"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt) <span class="sc">|&gt;</span></span>
+<span id="cb30-3"><a href></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
+<span id="cb30-4"><a href></a>  <span class="fu">mutate</span>(<span class="at">rank =</span> <span class="fu">rank</span>(<span class="fu">desc</span>(perc), <span class="at">ties.method =</span> <span class="st">&quot;min&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb30-5"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt, rank) <span class="sc">|&gt;</span></span>
+<span id="cb30-6"><a href></a>  <span class="fu">summarise</span>(<span class="at">fitm_class =</span> <span class="fu">paste</span>(fitm_class, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb30-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> rank, <span class="at">values_from =</span> fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 20,856 × 4
+   pracnum servdt     `1`         `2`        
+   &lt;chr&gt;   &lt;date&gt;     &lt;chr&gt;       &lt;chr&gt;      
+ 1 00007   2025-01-02 anaesthesia &lt;NA&gt;       
+ 2 00007   2025-01-03 anaesthesia not_a_visit
+ 3 00008   2025-01-02 unknown     &lt;NA&gt;       
+ 4 00008   2025-01-03 unknown     &lt;NA&gt;       
+ 5 00011   2025-01-01 advice      &lt;NA&gt;       
+ 6 00011   2025-01-02 unknown     advice     
+ 7 00011   2025-01-03 unknown     advice     
+ 8 00016   2025-01-02 unknown     &lt;NA&gt;       
+ 9 00016   2025-01-03 unknown     advice     
+10 00030   2025-01-03 not_a_visit &lt;NA&gt;       
+# ℹ 20,846 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="top-5-classes" class="slide level2">
+<h2>Top 5 classes?</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href></a>prac_class <span class="sc">|&gt;</span></span>
+<span id="cb32-2"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt) <span class="sc">|&gt;</span></span>
+<span id="cb32-3"><a href></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-4"><a href></a>  <span class="fu">mutate</span>(<span class="at">rank =</span> <span class="fu">rank</span>(<span class="fu">desc</span>(perc), <span class="at">ties.method =</span> <span class="st">&quot;min&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb32-5"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt, rank) <span class="sc">|&gt;</span></span>
+<span id="cb32-6"><a href></a>  <span class="fu">summarise</span>(<span class="at">fitm_class =</span> <span class="fu">paste</span>(fitm_class, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> rank, <span class="at">values_from =</span> fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb32-8"><a href></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">5</span><span class="st">`</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 7
+  pracnum servdt     `1`       `2`         `3`     `4`             `5`        
+  &lt;chr&gt;   &lt;date&gt;     &lt;chr&gt;     &lt;chr&gt;       &lt;chr&gt;   &lt;chr&gt;           &lt;chr&gt;      
+1 22895   2025-01-03 emergency not_a_visit unknown mental_health   advice     
+2 67517   2025-01-03 unknown   emergency   advice  pain_management anaesthesia</code></pre>
 </div>
 </div>
 

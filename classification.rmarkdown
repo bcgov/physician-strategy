@@ -277,3 +277,4 @@ prac_class |>
   pivot_wider(names_from = rank, values_from = fitm_class) |>
   filter(!is.na(`5`))
 ```
+
