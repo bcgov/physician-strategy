@@ -4,7 +4,7 @@
 # - can we find out which FPs are on LFP and which aren't?
 # - do FPs switch out of hospitalism after LFP?
 
-pacman::p_load(tidyverse, echarts4r, bslib, shinyWidgets, hsiaR, zoo, glue)
+pacman::p_load(tidyverse, hsiaR, zoo, glue)
 
 create_policies = function() {
   tribble(~policy, ~start_date, ~end_date, ~specs, ~comments,
@@ -14,33 +14,47 @@ create_policies = function() {
     mutate(end_date = replace_na(end_date, as.Date(Inf)))
 }
 
-pull_msp = function(midpoint = filter(targets::tar_read(policies), policy == "LFP")$start_date) {
+pull_msp = function(money_variable = "paidserv", months_back = 3, years = 5, min_start_date = as.Date("2020-09-01")) {
 
-  end = floor_date(today(), unit = "month") - 1
-  elapsed = end - midpoint
-  start = floor_date(midpoint - elapsed, "month")
+  # - months_back: how many months since today() do you want to go back? Default is 3 cuz that's what I believe it takes for the data to settle
+  # - min_start_date: A Covid adjustment; will become irrelevant soon
+
+  end = floor_date(today()  - months(months_back), unit = "month") - 1
+  start = floor_date(end - years(years), unit = "month")
 
   # quick covid adjustment
-  start = max(start, as.Date("2020-09-01"))
+  start = max(start, min_start_date)
 
-  #inner_query = hiBuildSQL$query$msp_encounters(dates = glue::glue("servdt between date '{start}' and date '{end}'"))
-
-
-  # for now we use paidserv but ask Duncan
-  inner_query = dplyr::sql(paste("select", hiBuildSQL$select$encounters, ",\npaidserv", "\nfrom", hiBuildSQL$from$msp_join, glue::glue("\nwhere servdt between date '{start}' and date '{end}' and"), hiBuildSQL$where$msp_encounters
-  ))
-
-  #browser()
-  #hiBuildSQL$query$msp_encounters("where servdt between date '{start}' and date '{end}'")
+  inner_query = paste0(
+    "select\n",
+    hiBuildSQL$select$msp_encounters,
+    ",\n",
+    money_variable,
+    ",\nfitm.fitm",
+    "\nfrom\n",
+    hiBuildSQL$from$msp_encounters,
+    glue::glue("\nwhere servdt between date '{start}' and date '{end}' and", .trim = F),
+    hiBuildSQL$where$msp_encounters
+  ) |>
+    sql()
 
   query = dplyr::sql(glue::glue("
-  SELECT pracnum, servdt, count(clnt_label) as encounters, sum(paidserv) as paidserv
+  SELECT
+    pracnum,
+    servdt,
+    fitm,
+    count(clnt_label) as encounters,
+    sum(paidserv) as paidserv
   FROM (\n{inner_query}\n)
-  GROUP BY pracnum, servdt
+  GROUP BY pracnum, servdt, fitm
   ORDER BY 1,2
   "))
 
   hiQuery(query, run_query = T, con=hiConnect())
+}
+
+pull_fitms = function() {
+  hiQuery("select * from ahip.fitmds", con=hiConnect())
 }
 
 pull_vt4 = function() {
@@ -50,7 +64,6 @@ pull_vt4 = function() {
 
 clean_msp = function(msp_raw) {
   stopifnot(sum(is.na(msp_raw)) == 0)
-
   msp_raw |>
     mutate(encounters = as.integer(encounters)) |>
     mutate(servdt = as.Date(servdt)) |>
@@ -67,7 +80,16 @@ clean_vt4 = function(vt4_raw) {
     mutate(across(c(funcspec), ~fct_inseq(as.character(.))))
 }
 
-get_msp_fp = function(msp, vt4, policies) {
+get_msp_fp = function(msp, vt4, fitms, policies) {
+
+  # midpoint: the start of LFP; so we want roughly equal number of days before and after
+  midpoint = filter(policies, policy == "LFP")$start_date
+
+  end = max(msp$servdt)
+  elapsed = end - midpoint
+  start = floor_date(midpoint - elapsed, "month")
+  start = max(start, min(msp$servdt))
+
   fp_specs = policies |>
     filter(policy == "LFP") |>
     pull(specs) |>
@@ -77,7 +99,10 @@ get_msp_fp = function(msp, vt4, policies) {
     filter(funcspec %in% fp_specs) |>
     select(pracnum, fiscal, funcspec, ha_cd, prac_age, prac_gender)
 
-  msp_fp = inner_join(msp, vt4_fps, by=join_by(pracnum, fiscal)) |>
+  msp_fp = msp |>
+    filter(between(servdt, start, end)) |>
+    inner_join(vt4_fps, by=join_by(pracnum, fiscal)) |>
+    left_join(fitms) |>
     mutate(is_LFP = between(servdt, policies$start_date, policies$end_date))
 
   stopifnot(

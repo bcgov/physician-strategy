@@ -56,7 +56,6 @@ tar_meta() |>
   reactable(bordered = T)
 ```
 
-
 Here are all the "pull" functions we are gonna use:
 
 ```{r}
@@ -66,15 +65,15 @@ print(pull_msp)
 print(pull_vt4)
 ```
 
+The date range for our data is from `r min(msp$servdt)` to `r max(msp$servdt)`.
 
 # FPs
 
 In this section, we analyze the impact of the [Longitudinal Family Physician Payment Model (LFP)](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/msp/physicians/longitudinal-family-physician-lfp-payment-model). This affects family doctors (FPs) only; the FPs specs are `r filter(policies, policy=='LFP')$specs[[1]] |> paste(collapse = ", ")`. The LFP model began `r filter(policies, policy=='LFP')$start_date |> format("%B %d, %Y")`. We will use that date as the threshold, although maybe we can get better info as to who is on LFP and who isn't.
 
+The date range for our data is from `r min(msp_fp$servdt)` to `r max(msp_fp$servdt)`. Note that we attempt to gather roughly equal-sized dates before and after LFP, truncating data from the most recent 3 months, and only considering entire months. Also, I have set a minimum start date for September 1, 2020 due to Covid.
 
 ## Data
-
-We have FP encounter data for years: `r cat(sort(unique(msp_fp$fiscal)), sep = ", ")`.
 
 Here, we show summary statistics for encounters and demonstrate the large right skew.
 
@@ -91,7 +90,7 @@ msp_fp |>
 ```{r}
 df = msp_fp |>
   group_by(pracnum, yearmon, is_LFP) |>
-  summarise(encounters = sum(encounters))
+  summarise(encounters = sum(encounters), paidserv = sum(paidserv))
 
 print(skimr::skim(df$encounters), include_summary = F)
 
@@ -113,6 +112,26 @@ df |>
   scale_x_continuous(labels = label_comma()) +
   theme(legend.position = 'bottom') +
   ggtitle("Density plot of total encounters per FP") |>
+  print()
+
+df |>
+  ggplot(aes(y=is_LFP, x=paidserv, color=is_LFP)) +
+  geom_boxplot() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_x_continuous(labels = label_currency()) +
+  theme(legend.position = 'none') +
+  ggtitle("Boxplot of paidserv per FP") |>
+  print()
+
+df |>
+  ggplot(aes(x=paidserv, color=is_LFP)) +
+  geom_density() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_x_continuous(labels = label_comma()) +
+  theme(legend.position = 'bottom') +
+  ggtitle("Density plot of paidserv per FP") |>
   print()
 ```
 
@@ -176,6 +195,45 @@ msp_fp |>
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
   ggtitle("Distinct Practitioners per Month")
 ```
+
+```{r}
+msp_fp |>
+  group_by(yearmon, is_LFP) |>
+  summarise(paidserv = sum(paidserv)) |>
+  ggplot(aes(x=yearmon, y=paidserv, color=is_LFP)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(method = 'lm', se = F) +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_currency()) +
+  geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  theme(legend.position = 'none') +
+  labs(x=NULL, y=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  ggtitle("paidserv")
+```
+
+```{r}
+msp_fp |>
+  group_by(yearmon, is_LFP) |>
+  summarise(encounters = sum(encounters), paidserv = sum(paidserv)) |>
+  ungroup() |>
+  mutate(paidserv_per_enc = paidserv / encounters) |>
+  ggplot(aes(x=yearmon, y=paidserv_per_enc, color=is_LFP)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(method = 'lm', se = F) +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_currency()) +
+  geom_vline(xintercept = zoo::as.yearmon(filter(policies, policy=='LFP')$start_date), color='red', linetype = 'dashed') +
+  theme(legend.position = 'none') +
+  labs(x=NULL, y=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  ggtitle("paidserv per encounter")
+```
+
 
 ```{r}
 cihi |>

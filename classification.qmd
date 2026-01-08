@@ -1,0 +1,202 @@
+---
+format:
+  revealjs:
+    theme: 'style2/hsiaR_style.scss'
+    fontfamily: 'BC Sans'
+margin: 0
+center: false
+width: '100%'
+height: '100%'
+embed-resources: true
+editor_options: 
+  chunk_output_type: console
+execute: 
+  echo: true
+---
+
+# FITM Classification Plan
+
+Tim
+
+2026-01-07
+
+## Steps
+
+1. Classify each FITM
+2. Filter and classify rows from MSP
+3. Incorporate relevant external information on pracs (eg SCRUBS)
+4. Classify pracs from (2) and (3).
+
+# 1. Classify each FITM
+
+## Classify each FITM
+
+```{r}
+pacman::p_load(hsiaR, tidyverse)
+con = hiConnect()
+
+if (fs::file_exists("data/fitms.Rds")) fitms = readRDS("data/fitms.Rds") else fitms = hiQuery("select * from ahip.fitmds"); saveRDS(fitms, "data/fitms.Rds")
+
+print(nrow(fitms))
+```
+
+## Classify each FITM
+```{r}
+fitms |> slice_sample(n=10)
+```
+
+## Classify each FITM
+
+```{r}
+fitm_class = fitms |>
+  mutate(fitm_class = case_when(
+    str_detect(fitmdesc, "(?i)MENTAL|OPIOID|DRUG") ~ "mental health",
+    str_detect(fitmdesc, "(?i)EMERGENCY") ~ "emergency",
+    str_detect(fitmdesc, "(?i)(?<!NO )ANA?ESTHESIA|EPIDURAL") ~ "anaesthesia",
+    str_detect(fitmdesc, "(?i)TRIGGER POINT INJECTION|PERIPHERAL NERVE BLOCK|NEUROTOMY") ~ "pain management",
+    str_detect(fitmdesc, "(?i)SURGICAL ASSIST") ~ "surgical assist",
+    str_detect(fitmdesc, "(?i)ADVICE|CONSULT EXP|CONFERENCE|FP BRIEF CLIN. CONF W/ ALL. CARE PROV. AND/OR PHYS") ~ "advice",
+    str_detect(fitmdesc, "(?i)INCENTIVE|PCN PANEL RPT: GENERAL|PRIMARY CARE PANEL REPORT|PCN ATTACH RPT|PCN DETACH RPT|CARE TIME-PER 15 MIN|MANAGEMENT FEE|REGISTRATION CODE|LFP|15 MIN|ENROLMENT CODE") ~ "not a visit",
+    fitm %in% c(98001,98002,98003,98004,98006) ~ "not a visit",
+    str_detect(fitmdesc, "(?i)WARTS|ULTRA VIOLET B TREATMENT|EXCISION TUMOR OF SKIN|EXCISION ADDITIONAL TUMOR OF SKIN") ~ "dermatology",
+    str_detect(fitmdesc, "(?i)REFERRAL|TRAY") ~ "referral",
+    
+    T ~ "unknown"
+  )) |>
+  select(fitm, fitmdesc, fitm_class)
+```
+
+## Classify each FITM
+
+```{r}
+fitm_class |> count(fitm_class)
+```
+
+## Classify each FITM
+
+```{r}
+fitm_class |> filter(fitm_class != "unknown") |> slice_sample(n = 10)
+```
+
+
+## Classify each FITM
+
+- Based on Dr. Sandra Roy's work
+- Incomplete. (eg what is "not a visit?")
+- Only FPs
+- Location?
+- Would need to be maintained (VT4?)
+- Can add checks for NAs
+
+## Classify each FITM
+
+```{r}
+if (!hiExistsTables('fitm_class', 'msea')) {
+  hiWriteTables("fitm_class", fitm_class, team_schema = 'msea')
+}
+```
+
+# 2. Filter and classify rows from MSP
+
+## hiBuildSQL
+
+```{r}
+hiBuildSQL$from$msp_encounters = "
+ahip.AR_MSPCLM_CORE_CAN msp
+left join AHIP.CB_DTL_DM_CLNT_VW clnt ON clnt.label = msp.clnt_label
+left join MSEA_TEAM_LVL2.LAB_PROVIDER lab ON msp.payenum=LPAD(lab.payenum, 5, '0')
+left join ahip.cb_dtl_dm_srv_date_vw dt ON msp.servdt = dt.srv_date
+left join msea_team_lvl2.fitm_class fitm on msp.fitm=fitm.fitm
+left join ahip.CB_DTL_FT_PRACRSTFYR_VWD pr on dt.SRV_FISC_YR=pr.FISC_YR and msp.pracnum=PRAC_BLLG_NUM
+"
+```
+
+## hiBuildSQL
+
+```{r}
+hiBuildSQL$select$msp_encounters = "
+msp.pracnum,
+trunc(servdt) as servdt,
+clnt.mrg_clnt_anon_idnt_id as clnt_label,
+pr.func_spty_cd,
+fitm.fitm,
+fitm.fitm_class
+"
+```
+
+
+
+## hiBuildSQL
+
+```{r}
+hiBuildSQL$query$msp_encounters = function(
+    start = lubridate::today() - months(3), 
+    end = lubridate::today() - months(3) - years(5)) {
+  paste0(
+    hsiaR:::glue_wrapper("
+      select distinct {hiBuildSQL$select$msp_encounters}
+      from {hiBuildSQL$from$msp_encounters}"),
+    "\nwhere\n",
+    "servdt between date '", start,
+    "' and date '", end, "' ",
+    hsiaR:::glue_wrapper("and {hiBuildSQL$where$msp_encounters}"),
+    "\norder by 1,2,3"
+  ) |> dplyr::sql()
+}
+```
+
+## hiBuildSQL
+
+```{r}
+hiBuildSQL$query$msp_encounters()
+```
+
+## Toy df
+
+```{r}
+query = hiBuildSQL$query$msp_encounters(start = "2025-01-01", end = "2025-01-03")
+
+if (fs::file_exists("data/msp_encounters.Rds")) msp_encounters = readRDS("data/msp_encounters.Rds") else msp_encounters = hiQuery(query, print_interpolated_query = F, con = hiConnect()); saveRDS(msp_encounters, "data/msp_encounters.Rds")
+
+msp_encounters |> slice_sample(n=10)
+```
+
+# 3. Incorporate relevant external information on pracs (eg SCRUBS)
+
+## ???
+
+- I have no idea about this part
+- Ignore for now
+
+# 4. Classify pracs from (2) and (3)
+
+## Counts per day
+
+```{r}
+msp_encounters |>
+  count(pracnum, func_spty_cd, servdt, fitm_class)
+```
+
+## Example: 22895
+
+```{r}
+msp_encounters |>
+  filter(pracnum == 22895) |>
+  count(pracnum, func_spty_cd, servdt, fitm_class)
+```
+
+## Example: 22895
+
+```{r}
+msp_encounters |>
+  filter(pracnum == 22895) |>
+  count(pracnum, func_spty_cd, servdt, fitm_class) |>
+  add_count(pracnum, func_spty_cd, servdt, wt = n, name = "total") |>
+  mutate(perc = n / total) |>
+  select(pracnum, func_spty_cd, servdt, fitm_class, perc) |>
+  pivot_wider(names_from = fitm_class, values_from = perc) |>
+  mutate(across(4:last_col(), ~replace_na(., 0))) |>
+  mutate(servdt = as.Date(servdt))
+  
+```
+
