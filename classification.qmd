@@ -1,7 +1,7 @@
 ---
 format:
   revealjs:
-    theme: 'style2/hsiaR_style.scss'
+    theme: 'style/hsiaR_style2.scss'
     fontfamily: 'BC Sans'
 margin: 0
 center: false
@@ -14,7 +14,7 @@ execute:
   echo: true
 ---
 
-# FITM Classification Plan
+# MSP Classification Plan
 
 Tim
 
@@ -22,133 +22,112 @@ Tim
 
 ## Steps
 
-1. Classify each FITM
-2. Filter and classify rows from MSP
-3. Incorporate relevant external information on pracs (eg SCRUBS)
-4. Classify pracs from (2) and (3).
+1.  Choose classes
+2.  Classify each MSP encounter
+3.  Obtain relevant external information on pracs
+4.  Classify each prac
 
-# 1. Classify each FITM
+# 1. Choose classes
 
-## Classify each FITM
+## FITM
 
 ```{r}
 pacman::p_load(hsiaR, tidyverse)
 con = hiConnect()
 
-if (fs::file_exists("data/fitms.Rds")) fitms = readRDS("data/fitms.Rds") else fitms = hiQuery("select * from ahip.fitmds"); saveRDS(fitms, "data/fitms.Rds")
-
-print(nrow(fitms))
+fitms = hiQuery("select * from ahip.fitmds", print_interpolated_query = F)
+nrow(fitms)
 ```
 
-## Classify each FITM
+## FITM
+
 ```{r}
 fitms |> slice_sample(n=10)
 ```
 
-## Classify each FITM
+## FITM
 
 ```{r}
-fitm_class = fitms |>
-  mutate(fitm_class = case_when(
-    str_detect(fitmdesc, "(?i)MENTAL|OPIOID|DRUG") ~ "mental health",
-    str_detect(fitmdesc, "(?i)EMERGENCY") ~ "emergency",
-    str_detect(fitmdesc, "(?i)(?<!NO )ANA?ESTHESIA|EPIDURAL") ~ "anaesthesia",
-    str_detect(fitmdesc, "(?i)TRIGGER POINT INJECTION|PERIPHERAL NERVE BLOCK|NEUROTOMY") ~ "pain management",
-    str_detect(fitmdesc, "(?i)SURGICAL ASSIST") ~ "surgical assist",
-    str_detect(fitmdesc, "(?i)ADVICE|CONSULT EXP|CONFERENCE|FP BRIEF CLIN. CONF W/ ALL. CARE PROV. AND/OR PHYS") ~ "advice",
-    str_detect(fitmdesc, "(?i)INCENTIVE|PCN PANEL RPT: GENERAL|PRIMARY CARE PANEL REPORT|PCN ATTACH RPT|PCN DETACH RPT|CARE TIME-PER 15 MIN|MANAGEMENT FEE|REGISTRATION CODE|LFP|15 MIN|ENROLMENT CODE") ~ "not a visit",
-    fitm %in% c(98001,98002,98003,98004,98006) ~ "not a visit",
-    str_detect(fitmdesc, "(?i)WARTS|ULTRA VIOLET B TREATMENT|EXCISION TUMOR OF SKIN|EXCISION ADDITIONAL TUMOR OF SKIN") ~ "dermatology",
-    str_detect(fitmdesc, "(?i)REFERRAL|TRAY") ~ "referral",
-    
-    T ~ "unknown"
+classes = tibble(class = c("mental health", "emergency", "anaesthesia", "pain management", "surgical assist", "advice", "not a visit", "dermatology", "referral", "unknown")) |>
+    mutate(class_id = row_number(), .before=1) |> 
+    mutate(class_id = case_match(class, "unknown" ~ NA, .default = class_id))
+
+classes
+```
+
+## FITM
+
+```{r}
+fitm_classes = fitms |>
+  mutate(class_id = case_when(
+    str_detect(fitmdesc, "(?i)MENTAL|OPIOID|DRUG") ~ 1L,
+    str_detect(fitmdesc, "(?i)EMERGENCY") ~ 2L,
+    str_detect(fitmdesc, "(?i)(?<!NO )ANA?ESTHESIA|EPIDURAL") ~ 3L,
+    str_detect(fitmdesc, "(?i)TRIGGER POINT INJECTION|PERIPHERAL NERVE BLOCK|NEUROTOMY") ~ 4L,
+    str_detect(fitmdesc, "(?i)SURGICAL ASSIST") ~ 5L,
+    str_detect(fitmdesc, "(?i)ADVICE|CONSULT EXP|CONFERENCE|FP BRIEF CLIN. CONF W/ ALL. CARE PROV. AND/OR PHYS") ~ 6L,
+    str_detect(fitmdesc, "(?i)INCENTIVE|PCN PANEL RPT: GENERAL|PRIMARY CARE PANEL REPORT|PCN ATTACH RPT|PCN DETACH RPT|CARE TIME-PER 15 MIN|MANAGEMENT FEE|REGISTRATION CODE|LFP|15 MIN|ENROLMENT CODE") ~ 7L,
+    fitm %in% c(98001,98002,98003,98004,98006) ~ 7L,
+    str_detect(fitmdesc, "(?i)WARTS|ULTRA VIOLET B TREATMENT|EXCISION TUMOR OF SKIN|EXCISION ADDITIONAL TUMOR OF SKIN") ~ 8L,
+    str_detect(fitmdesc, "(?i)REFERRAL|TRAY") ~ 9L,
+    T ~ NA
   )) |>
-  select(fitm, fitmdesc, fitm_class)
+  inner_join(classes) |>
+  select(fitm, class_id, class)
 ```
 
-## Classify each FITM
+## FITM
 
 ```{r}
-fitm_class |> count(fitm_class)
+fitm_classes |> count(class)
 ```
 
-## Classify each FITM
+## FITM
 
 ```{r}
-fitm_class |> filter(fitm_class != "unknown") |> slice_sample(n = 10)
+fitm_classes |> na.omit() |> slice_sample(n = 10)
 ```
 
-
-## Classify each FITM
-
-- Based on Dr. Sandra Roy's work
-- Incomplete. (eg what is "not a visit?")
-- Only FPs
-- Location?
-- Would need to be maintained (VT4?)
-- Can add checks for NAs
-
-## Classify each FITM
+## SERVCODE
 
 ```{r}
-if (!hiExistsTables('fitm_class', 'msea')) {
-  hiWriteTables("fitm_class", fitm_class, team_schema = 'msea')
-}
+servcds = hiQuery("select * from ahip.servcode", print_interpolated_query = F)
+nrow(servcds)
 ```
 
-# 2. Filter and classify rows from MSP
+## SERVCODE
+
+```{r}
+servcds |> slice_sample(n = 10)
+```
+
+## Summary
+
+-   FITM, SERVCD, SERVLOC
+-   Based on Dr. Sandra Roy's work
+-   Incomplete. (mostly "unknown"; what is "not a visit?"; only FPs)
+-   Multiple classifications?
+-   Would need to be maintained, since FITMs change
+-   Table in MSEA
+
+# 2. Classify each MSP encounter
 
 ## hiBuildSQL
 
 ```{r}
-hiBuildSQL$from$msp_encounters = "
-ahip.AR_MSPCLM_CORE_CAN msp
-left join AHIP.CB_DTL_DM_CLNT_VW clnt ON clnt.label = msp.clnt_label
-left join MSEA_TEAM_LVL2.LAB_PROVIDER lab ON msp.payenum=LPAD(lab.payenum, 5, '0')
-left join ahip.cb_dtl_dm_srv_date_vw dt ON msp.servdt = dt.srv_date
-left join msea_team_lvl2.fitm_class fitm on msp.fitm=fitm.fitm
-left join ahip.CB_DTL_FT_PRACRSTFYR_VWD pr on dt.SRV_FISC_YR=pr.FISC_YR and msp.pracnum=PRAC_BLLG_NUM
-"
+hsiaR::hiBuildSQL$query$msp_encounters()
 ```
 
 ## hiBuildSQL
 
 ```{r}
 hiBuildSQL$select$msp_encounters = "
-msp.pracnum,
-trunc(servdt) as servdt,
-clnt.mrg_clnt_anon_idnt_id as clnt_label,
-pr.func_spty_cd func_spty_cd,
-fitm.fitm,
-fitm.fitm_class
+  distinct msp.pracnum,
+  trunc(servdt) as servdt,
+  clnt.mrg_clnt_anon_idnt_id as clnt_label
+  fitm.fitm,
+  fitm.fitm_class
 "
-```
-
-
-
-## hiBuildSQL
-
-```{r}
-hiBuildSQL$query$msp_encounters = function(
-    start = lubridate::today() - months(3) - years(5), 
-    end = lubridate::today() - months(3)) {
-  paste0(
-    hsiaR:::glue_wrapper("
-      select distinct {hiBuildSQL$select$msp_encounters}
-      from {hiBuildSQL$from$msp_encounters}"),
-    "\nwhere\n",
-    "servdt between date '", start,
-    "' and date '", end, "' ",
-    hsiaR:::glue_wrapper("and {hiBuildSQL$where$msp_encounters}"),
-    "\norder by 1,2,3"
-  ) |> dplyr::sql()
-}
-```
-
-## hiBuildSQL
-
-```{r}
-hiBuildSQL$query$msp_encounters()
 ```
 
 ## Toy df
@@ -158,26 +137,25 @@ query = hiBuildSQL$query$msp_encounters(start = "2025-01-01", end = "2025-01-03"
 
 if (fs::file_exists("data/msp_encounters.Rds")) msp_encounters = readRDS("data/msp_encounters.Rds") else msp_encounters = hiQuery(query, print_interpolated_query = F, con = hiConnect()); saveRDS(msp_encounters, "data/msp_encounters.Rds")
 
-msp_encounters |> slice_sample(n=10)
-```
-
-## Clean
-
-```{r}
 msp_encounters = msp_encounters |>
   mutate(servdt = as.Date(servdt)) |>
   mutate(func_spty_cd = as.integer(func_spty_cd))
 ```
 
+## Toy df
 
-# 3. Incorporate relevant external information on pracs (eg SCRUBS)
+```{r}
+msp_encounters |> slice_sample(n=10)
+```
+
+# 3. Obtain relevant external information on pracs
 
 ## ???
 
-- I have no idea about this part
-- Ignore for now
+-   I have no idea about this part
+-   SCRUBS? Prac roster?
 
-# 4. Classify pracs from (2) and (3)
+# 4. Classify each prac
 
 ## Counts per day
 
@@ -207,7 +185,7 @@ msp_encounters |>
   mutate(across(4:last_col(), ~replace_na(., 0)))
 ```
 
-## Example: 22895 with running totals
+## Example: 22895
 
 ```{r}
 msp_encounters |>
@@ -224,10 +202,10 @@ msp_encounters |>
   mutate(across(4:last_col(), ~replace_na(., 0)))
 ```
 
-## Classifier by prac
+## Summary
 
-- ML?
-- By day? By month? By year?
+-   ML?
+-   By day? By month? By year?
 
 ## Make the table
 

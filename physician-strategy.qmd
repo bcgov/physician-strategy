@@ -24,6 +24,7 @@ execute:
   warning: false
   message: false
   cache: false
+  results: asis
 ---
 
 # Introduction
@@ -56,6 +57,7 @@ tar_meta() |>
   reactable(bordered = T)
 ```
 
+
 Here are all the "pull" functions we are gonna use:
 
 ```{r}
@@ -65,7 +67,6 @@ print(pull_msp)
 print(pull_vt4)
 ```
 
-The date range for our data is from `r min(msp$servdt)` to `r max(msp$servdt)`.
 
 # FPs
 
@@ -298,8 +299,39 @@ cihi |>
 ```
 
 ```{r}
-tar_load(vt4_switches)
+vt4 |>
+  count(fiscal) |>
+  ggplot(aes(x=fiscal, y=n, group=1)) +
+  geom_line() +
+  geom_point() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = filter(policies, policy=='LFP')$start_date |> as_fiscal(example_format = "2020/2021"), color='red', linetype = 'dashed') +
+  theme(legend.position = 'bottom') +
+  labs(x=NULL, y=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  ggtitle("Headcount of all physicians", "Source = VT4")
+```
 
+```{r}
+vt4 |>
+  mutate(is_fp = funcspec %in% (policies |> filter(policy == "LFP") |> pull(specs) |> first())) |>
+  count(fiscal, is_fp) |>
+  ggplot(aes(x=fiscal, y=n, color=is_fp, group=is_fp)) +
+  geom_line() +
+  geom_point() +
+  nice_gg() +
+  scale_colour_viridis_d() +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = filter(policies, policy=='LFP')$start_date |> as_fiscal(example_format = "2020/2021"), color='red', linetype = 'dashed') +
+  theme(legend.position = 'bottom') +
+  labs(x=NULL, y=NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  ggtitle("Headcount of FPs and non-FPs", "Source = VT4")
+```
+
+```{r}
 vt4_switches |>
   na.omit() |>
   filter(change != "no_change") |>
@@ -318,9 +350,6 @@ vt4_switches |>
   labs(x="year", y=NULL, color=NULL) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
   ggtitle("Switching to and from FP", "Source = VT4")
-
-  
-
 ```
 
 
@@ -367,16 +396,17 @@ w_unpaired = map(vars, function(var) {
 
 ```
 
-
+### T test
 `r reactable(t_unpaired, bordered=T)`
 
+### Wilcox test
 `r reactable(w_unpaired, bordered=T)`
 
 We can conclude that in general there are significant differences before and after LFP.
 
 ### Paired mean tests
 
-In this section, we run paired mean tests. These are specific to individual doctors---we are asking whether individual doctors change their behaviour following LFP. As before, we consider non-parametric tests, since the data are not Gaussian. 
+In this section, we run paired mean tests. These are specific to individual doctors---we are asking whether individual doctors' mean number of encounters changes following LFP implementation. As before, we consider non-parametric tests, since the data are not Gaussian. 
 
 ```{r}
 df1 = msp_fp |>
@@ -402,8 +432,10 @@ w_paired = wilcox.test(df1$`FALSE`, df1$`TRUE`, paired = T) |>
   mutate(across(where(is.double), ~round(., 2)))
 ```
 
+### T test
 `r reactable(t_paired, bordered=T)`
 
+### Wilcox test
 `r reactable(w_paired, bordered=T)`
 
 

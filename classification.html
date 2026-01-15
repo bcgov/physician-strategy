@@ -1052,88 +1052,112 @@ margin-right: 0; }
 
 
 <section>
-<section id="fitm-classification-plan" class="title-slide slide level1 center">
-<h1>FITM Classification Plan</h1>
+<section id="msp-classification-plan" class="title-slide slide level1 center">
+<h1>MSP Classification Plan</h1>
 <p>Tim</p>
 <p>2026-01-07</p>
 </section>
 <section id="steps" class="slide level2">
 <h2>Steps</h2>
 <ol type="1">
-<li>Classify each FITM</li>
-<li>Filter and classify rows from MSP</li>
-<li>Incorporate relevant external information on pracs (eg SCRUBS)</li>
-<li>Classify pracs from (2) and (3).</li>
+<li>Choose classes</li>
+<li>Classify each MSP encounter</li>
+<li>Obtain relevant external information on pracs</li>
+<li>Classify each prac</li>
 </ol>
 </section></section>
 <section>
-<section id="classify-each-fitm" class="title-slide slide level1 center">
-<h1>1. Classify each FITM</h1>
+<section id="choose-classes" class="title-slide slide level1 center">
+<h1>1. Choose classes</h1>
 
 </section>
-<section id="classify-each-fitm-1" class="slide level2">
-<h2>Classify each FITM</h2>
+<section id="fitm" class="slide level2">
+<h2>FITM</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(hsiaR, tidyverse)</span>
 <span id="cb1-2"><a href></a>con <span class="ot">=</span> <span class="fu">hiConnect</span>()</span>
 <span id="cb1-3"><a href></a></span>
-<span id="cb1-4"><a href></a><span class="cf">if</span> (fs<span class="sc">::</span><span class="fu">file_exists</span>(<span class="st">&quot;data/fitms.Rds&quot;</span>)) fitms <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="st">&quot;data/fitms.Rds&quot;</span>) <span class="cf">else</span> fitms <span class="ot">=</span> <span class="fu">hiQuery</span>(<span class="st">&quot;select * from ahip.fitmds&quot;</span>); <span class="fu">saveRDS</span>(fitms, <span class="st">&quot;data/fitms.Rds&quot;</span>)</span>
-<span id="cb1-5"><a href></a></span>
-<span id="cb1-6"><a href></a><span class="fu">print</span>(<span class="fu">nrow</span>(fitms))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-4"><a href></a>fitms <span class="ot">=</span> <span class="fu">hiQuery</span>(<span class="st">&quot;select * from ahip.fitmds&quot;</span>, <span class="at">print_interpolated_query =</span> F)</span>
+<span id="cb1-5"><a href></a><span class="fu">nrow</span>(fitms)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 10212</code></pre>
 </div>
 </div>
 </section>
-<section id="classify-each-fitm-2" class="slide level2">
-<h2>Classify each FITM</h2>
+<section id="fitm-1" class="slide level2">
+<h2>FITM</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href></a>fitms <span class="sc">|&gt;</span> <span class="fu">slice_sample</span>(<span class="at">n=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 8
     fitm fitmdesc       fitmdsc1 fitmdsc2 fitmdsc3 highuse ins_r_cd virtual_flag
    &lt;dbl&gt; &lt;chr&gt;          &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;       
- 1  3235 CORTICAL LOCA… INTRAOP… STIMULA… &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 2  8632 RADIOLOGY ASS… RADIOLO… NOTE:    08632 A… N       &lt;NA&gt;     &lt;NA&gt;        
- 3 96706 APB DIRECTIVE… APB CON… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 4 19773 WORKSAFEBC RE… WORKSAF… &lt;NA&gt;     &lt;NA&gt;     &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;        
- 5 22011 TELEHEALTH RE… TELEHEA… WHERE A… WITHIN … N       &lt;NA&gt;     Full Virtua…
- 6 36229 NP-IMMUNIZATI… NP - IM… NOTES:   I)   FO… N       &lt;NA&gt;     &lt;NA&gt;        
- 7  9998 ORTHODONTIA M… ORTHODO… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 8 36297 NP-INSERTION … INSERTI… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
- 9 36330 NP-INDIVIDUAL… INDIVID… FOR A P… NOTE: M… N       &lt;NA&gt;     &lt;NA&gt;        
-10  1033 NERVE BLOCK S… NERVE B… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        </code></pre>
+ 1 90085 DONATH-LANDST… Donath-… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
+ 2 92450 VITAMIN B12    Vitamin… &lt;NA&gt;     &lt;NA&gt;     Y       &lt;NA&gt;     &lt;NA&gt;        
+ 3  7881 SUBAORTIC STE… Subaort… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
+ 4 91327 CALCIUM - 24 … CALCIUM… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
+ 5  3976 SPEECH OBTURA… SPEECH … AND ADA… BULB. L… N       &lt;NA&gt;     &lt;NA&gt;        
+ 6 31008 RHEUMATOLOGY … CONTINU… &lt;NA&gt;     &lt;NA&gt;     N       &lt;NA&gt;     &lt;NA&gt;        
+ 7 96505 MSDSI MEDICAL… MSDSI M… &lt;NA&gt;     &lt;NA&gt;     N       MS       &lt;NA&gt;        
+ 8 36319 NP-INITIAL VI… INITIAL… INCLUDE… LABORAT… N       &lt;NA&gt;     &lt;NA&gt;        
+ 9 19965 WORKSAFEBC HO… WORKSAF… &lt;NA&gt;     &lt;NA&gt;     N       WC       &lt;NA&gt;        
+10  8533 FIBULA AND TI… Tibia a… &lt;NA&gt;     &lt;NA&gt;     Y       &lt;NA&gt;     &lt;NA&gt;        </code></pre>
 </div>
 </div>
 </section>
-<section id="classify-each-fitm-3" class="slide level2">
-<h2>Classify each FITM</h2>
+<section id="fitm-2" class="slide level2">
+<h2>FITM</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href></a>fitm_class <span class="ot">=</span> fitms <span class="sc">|&gt;</span></span>
-<span id="cb5-2"><a href></a>  <span class="fu">mutate</span>(<span class="at">fitm_class =</span> <span class="fu">case_when</span>(</span>
-<span id="cb5-3"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)MENTAL|OPIOID|DRUG&quot;</span>) <span class="sc">~</span> <span class="st">&quot;mental health&quot;</span>,</span>
-<span id="cb5-4"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)EMERGENCY&quot;</span>) <span class="sc">~</span> <span class="st">&quot;emergency&quot;</span>,</span>
-<span id="cb5-5"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)(?&lt;!NO )ANA?ESTHESIA|EPIDURAL&quot;</span>) <span class="sc">~</span> <span class="st">&quot;anaesthesia&quot;</span>,</span>
-<span id="cb5-6"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)TRIGGER POINT INJECTION|PERIPHERAL NERVE BLOCK|NEUROTOMY&quot;</span>) <span class="sc">~</span> <span class="st">&quot;pain management&quot;</span>,</span>
-<span id="cb5-7"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)SURGICAL ASSIST&quot;</span>) <span class="sc">~</span> <span class="st">&quot;surgical assist&quot;</span>,</span>
-<span id="cb5-8"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)ADVICE|CONSULT EXP|CONFERENCE|FP BRIEF CLIN. CONF W/ ALL. CARE PROV. AND/OR PHYS&quot;</span>) <span class="sc">~</span> <span class="st">&quot;advice&quot;</span>,</span>
-<span id="cb5-9"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)INCENTIVE|PCN PANEL RPT: GENERAL|PRIMARY CARE PANEL REPORT|PCN ATTACH RPT|PCN DETACH RPT|CARE TIME-PER 15 MIN|MANAGEMENT FEE|REGISTRATION CODE|LFP|15 MIN|ENROLMENT CODE&quot;</span>) <span class="sc">~</span> <span class="st">&quot;not a visit&quot;</span>,</span>
-<span id="cb5-10"><a href></a>    fitm <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">98001</span>,<span class="dv">98002</span>,<span class="dv">98003</span>,<span class="dv">98004</span>,<span class="dv">98006</span>) <span class="sc">~</span> <span class="st">&quot;not a visit&quot;</span>,</span>
-<span id="cb5-11"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)WARTS|ULTRA VIOLET B TREATMENT|EXCISION TUMOR OF SKIN|EXCISION ADDITIONAL TUMOR OF SKIN&quot;</span>) <span class="sc">~</span> <span class="st">&quot;dermatology&quot;</span>,</span>
-<span id="cb5-12"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)REFERRAL|TRAY&quot;</span>) <span class="sc">~</span> <span class="st">&quot;referral&quot;</span>,</span>
-<span id="cb5-13"><a href></a>    </span>
-<span id="cb5-14"><a href></a>    T <span class="sc">~</span> <span class="st">&quot;unknown&quot;</span></span>
-<span id="cb5-15"><a href></a>  )) <span class="sc">|&gt;</span></span>
-<span id="cb5-16"><a href></a>  <span class="fu">select</span>(fitm, fitmdesc, fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="classify-each-fitm-4" class="slide level2">
-<h2>Classify each FITM</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href></a>fitm_class <span class="sc">|&gt;</span> <span class="fu">count</span>(fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href></a>classes <span class="ot">=</span> <span class="fu">tibble</span>(<span class="at">class =</span> <span class="fu">c</span>(<span class="st">&quot;mental health&quot;</span>, <span class="st">&quot;emergency&quot;</span>, <span class="st">&quot;anaesthesia&quot;</span>, <span class="st">&quot;pain management&quot;</span>, <span class="st">&quot;surgical assist&quot;</span>, <span class="st">&quot;advice&quot;</span>, <span class="st">&quot;not a visit&quot;</span>, <span class="st">&quot;dermatology&quot;</span>, <span class="st">&quot;referral&quot;</span>, <span class="st">&quot;unknown&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb5-2"><a href></a>    <span class="fu">mutate</span>(<span class="at">class_id =</span> <span class="fu">row_number</span>(), <span class="at">.before=</span><span class="dv">1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb5-3"><a href></a>    <span class="fu">mutate</span>(<span class="at">class_id =</span> <span class="fu">case_match</span>(class, <span class="st">&quot;unknown&quot;</span> <span class="sc">~</span> <span class="cn">NA</span>, <span class="at">.default =</span> class_id))</span>
+<span id="cb5-4"><a href></a></span>
+<span id="cb5-5"><a href></a>classes</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 2
-   fitm_class          n
+   class_id class          
+      &lt;int&gt; &lt;chr&gt;          
+ 1        1 mental health  
+ 2        2 emergency      
+ 3        3 anaesthesia    
+ 4        4 pain management
+ 5        5 surgical assist
+ 6        6 advice         
+ 7        7 not a visit    
+ 8        8 dermatology    
+ 9        9 referral       
+10       NA unknown        </code></pre>
+</div>
+</div>
+</section>
+<section id="fitm-3" class="slide level2">
+<h2>FITM</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href></a>fitm_classes <span class="ot">=</span> fitms <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href></a>  <span class="fu">mutate</span>(<span class="at">class_id =</span> <span class="fu">case_when</span>(</span>
+<span id="cb7-3"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)MENTAL|OPIOID|DRUG&quot;</span>) <span class="sc">~</span> <span class="dv">1</span>L,</span>
+<span id="cb7-4"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)EMERGENCY&quot;</span>) <span class="sc">~</span> <span class="dv">2</span>L,</span>
+<span id="cb7-5"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)(?&lt;!NO )ANA?ESTHESIA|EPIDURAL&quot;</span>) <span class="sc">~</span> <span class="dv">3</span>L,</span>
+<span id="cb7-6"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)TRIGGER POINT INJECTION|PERIPHERAL NERVE BLOCK|NEUROTOMY&quot;</span>) <span class="sc">~</span> <span class="dv">4</span>L,</span>
+<span id="cb7-7"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)SURGICAL ASSIST&quot;</span>) <span class="sc">~</span> <span class="dv">5</span>L,</span>
+<span id="cb7-8"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)ADVICE|CONSULT EXP|CONFERENCE|FP BRIEF CLIN. CONF W/ ALL. CARE PROV. AND/OR PHYS&quot;</span>) <span class="sc">~</span> <span class="dv">6</span>L,</span>
+<span id="cb7-9"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)INCENTIVE|PCN PANEL RPT: GENERAL|PRIMARY CARE PANEL REPORT|PCN ATTACH RPT|PCN DETACH RPT|CARE TIME-PER 15 MIN|MANAGEMENT FEE|REGISTRATION CODE|LFP|15 MIN|ENROLMENT CODE&quot;</span>) <span class="sc">~</span> <span class="dv">7</span>L,</span>
+<span id="cb7-10"><a href></a>    fitm <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">98001</span>,<span class="dv">98002</span>,<span class="dv">98003</span>,<span class="dv">98004</span>,<span class="dv">98006</span>) <span class="sc">~</span> <span class="dv">7</span>L,</span>
+<span id="cb7-11"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)WARTS|ULTRA VIOLET B TREATMENT|EXCISION TUMOR OF SKIN|EXCISION ADDITIONAL TUMOR OF SKIN&quot;</span>) <span class="sc">~</span> <span class="dv">8</span>L,</span>
+<span id="cb7-12"><a href></a>    <span class="fu">str_detect</span>(fitmdesc, <span class="st">&quot;(?i)REFERRAL|TRAY&quot;</span>) <span class="sc">~</span> <span class="dv">9</span>L,</span>
+<span id="cb7-13"><a href></a>    T <span class="sc">~</span> <span class="cn">NA</span></span>
+<span id="cb7-14"><a href></a>  )) <span class="sc">|&gt;</span></span>
+<span id="cb7-15"><a href></a>  <span class="fu">inner_join</span>(classes) <span class="sc">|&gt;</span></span>
+<span id="cb7-16"><a href></a>  <span class="fu">select</span>(fitm, class_id, class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="fitm-4" class="slide level2">
+<h2>FITM</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href></a>fitm_classes <span class="sc">|&gt;</span> <span class="fu">count</span>(class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 2
+   class               n
    &lt;chr&gt;           &lt;int&gt;
  1 advice             75
  2 anaesthesia        70
@@ -1148,213 +1172,209 @@ margin-right: 0; }
 </div>
 </div>
 </section>
-<section id="classify-each-fitm-5" class="slide level2">
-<h2>Classify each FITM</h2>
+<section id="fitm-5" class="slide level2">
+<h2>FITM</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href></a>fitm_class <span class="sc">|&gt;</span> <span class="fu">filter</span>(fitm_class <span class="sc">!=</span> <span class="st">&quot;unknown&quot;</span>) <span class="sc">|&gt;</span> <span class="fu">slice_sample</span>(<span class="at">n =</span> <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href></a>fitm_classes <span class="sc">|&gt;</span> <span class="fu">na.omit</span>() <span class="sc">|&gt;</span> <span class="fu">slice_sample</span>(<span class="at">n =</span> <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 3
-    fitm fitmdesc                                           fitm_class   
-   &lt;dbl&gt; &lt;chr&gt;                                              &lt;chr&gt;        
- 1 97558 ENCOUNTER CODE - NP MENTAL HEALTH CARE             mental health
- 2  8633 RADIOLOGY ASSISTANT FEE - EACH 15 MIN AFTER 1 HOUR not a visit  
- 3 33305 EMERGENCY VISIT-GASTROENTEROLOGY                   emergency    
- 4 98261 LFP LOCUM INPATIENT URGENT ASSESSMENT              not a visit  
- 5   224 ULTRA VIOLET B TREATMENT, WHOLE OR PARTIAL BODY    dermatology  
- 6  3656 SEGMENTAL OSTEOTOMY - SECOND SEGMENT               mental health
- 7  1172 ANAES. INTENSITY/COMPLEXITY LEVEL 2 - PER 15 MINS  not a visit  
- 8  1018 EMERGENCY AT NIGHT, ANAESTHESIA                    emergency    
- 9  1831 LEVEL I EMERGENCY CARE - NIGHT                     emergency    
-10  1036 EPIDURAL BLOCKS: THORACIC                          anaesthesia  </code></pre>
+    fitm class_id class          
+   &lt;dbl&gt;    &lt;int&gt; &lt;chr&gt;          
+ 1 81194        5 surgical assist
+ 2 98012        7 not a visit    
+ 3 92502        9 referral       
+ 4  1870        2 emergency      
+ 5 36201        6 advice         
+ 6 72794        1 mental health  
+ 7 98229        7 not a visit    
+ 8 97815        7 not a visit    
+ 9 97642        7 not a visit    
+10 98236        7 not a visit    </code></pre>
 </div>
 </div>
 </section>
-<section id="classify-each-fitm-6" class="slide level2">
-<h2>Classify each FITM</h2>
-<ul>
-<li>Based on Dr. Sandra Roy’s work</li>
-<li>Incomplete. (eg what is “not a visit?”)</li>
-<li>Only FPs</li>
-<li>Location?</li>
-<li>Would need to be maintained (VT4?)</li>
-<li>Can add checks for NAs</li>
-</ul>
-</section>
-<section id="classify-each-fitm-7" class="slide level2">
-<h2>Classify each FITM</h2>
+<section id="servcode" class="slide level2">
+<h2>SERVCODE</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">hiExistsTables</span>(<span class="st">&#39;fitm_class&#39;</span>, <span class="st">&#39;msea&#39;</span>)) {</span>
-<span id="cb10-2"><a href></a>  <span class="fu">hiWriteTables</span>(<span class="st">&quot;fitm_class&quot;</span>, fitm_class, <span class="at">team_schema =</span> <span class="st">&#39;msea&#39;</span>)</span>
-<span id="cb10-3"><a href></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href></a>servcds <span class="ot">=</span> <span class="fu">hiQuery</span>(<span class="st">&quot;select * from ahip.servcode&quot;</span>, <span class="at">print_interpolated_query =</span> F)</span>
+<span id="cb12-2"><a href></a><span class="fu">nrow</span>(servcds)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 79</code></pre>
 </div>
+</div>
+</section>
+<section id="servcode-1" class="slide level2">
+<h2>SERVCODE</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href></a>servcds <span class="sc">|&gt;</span> <span class="fu">slice_sample</span>(<span class="at">n =</span> <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 2
+   servcd svcddesc                                    
+    &lt;dbl&gt; &lt;chr&gt;                                       
+ 1     25 HOME VISITS (SPECIALISTS)                   
+ 2     74 SPECIAL PROCEDURES (CANCELLED)              
+ 3     46 DIALYSIS/TRANSFUSIONS                       
+ 4     13 MIDWIFERY                                   
+ 5     81 PULMONARY FUNCTION (CANCELLED)              
+ 6     54 HOSPITAL VISIT (CANCELLED)                  
+ 7     47 GENERAL SERVICES (NON-INVASIVE TESTS, PROC.)
+ 8     75 X-RAY (CANCELLED)                           
+ 9     77 COMMON OFFICE PROCEDURES (CANCELLED)        
+10     16 SSC II-LMA FEES                             </code></pre>
+</div>
+</div>
+</section>
+<section id="summary" class="slide level2">
+<h2>Summary</h2>
+<ul>
+<li>FITM, SERVCD, SERVLOC</li>
+<li>Based on Dr. Sandra Roy’s work</li>
+<li>Incomplete. (mostly “unknown”; what is “not a visit?”; only FPs)</li>
+<li>Flowchart?</li>
+<li>Multiple classifications?</li>
+<li>Would need to be maintained, since FITMs change</li>
+</ul>
 </section></section>
 <section>
-<section id="filter-and-classify-rows-from-msp" class="title-slide slide level1 center">
-<h1>2. Filter and classify rows from MSP</h1>
+<section id="classify-each-msp-encounter" class="title-slide slide level1 center">
+<h1>2. Classify each MSP encounter</h1>
 
 </section>
 <section id="hibuildsql" class="slide level2">
 <h2>hiBuildSQL</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href></a>hiBuildSQL<span class="sc">$</span>from<span class="sc">$</span>msp_encounters <span class="ot">=</span> <span class="st">&quot;</span></span>
-<span id="cb11-2"><a href></a><span class="st">ahip.AR_MSPCLM_CORE_CAN msp</span></span>
-<span id="cb11-3"><a href></a><span class="st">left join AHIP.CB_DTL_DM_CLNT_VW clnt ON clnt.label = msp.clnt_label</span></span>
-<span id="cb11-4"><a href></a><span class="st">left join MSEA_TEAM_LVL2.LAB_PROVIDER lab ON msp.payenum=LPAD(lab.payenum, 5, &#39;0&#39;)</span></span>
-<span id="cb11-5"><a href></a><span class="st">left join ahip.cb_dtl_dm_srv_date_vw dt ON msp.servdt = dt.srv_date</span></span>
-<span id="cb11-6"><a href></a><span class="st">left join msea_team_lvl2.fitm_class fitm on msp.fitm=fitm.fitm</span></span>
-<span id="cb11-7"><a href></a><span class="st">left join ahip.CB_DTL_FT_PRACRSTFYR_VWD pr on dt.SRV_FISC_YR=pr.FISC_YR and msp.pracnum=PRAC_BLLG_NUM</span></span>
-<span id="cb11-8"><a href></a><span class="st">&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href></a>hiBuildSQL<span class="sc">$</span>query<span class="sc">$</span>msp_encounters</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function(start_dt = lubridate::today() - months(3), end_dt = lubridate::today() - months(3) - lubridate::years(5), ...) {
+    q = &quot;
+    select {hiBuildSQL$select$msp_encounters}
+    from {hiBuildSQL$from$msp_encounters}
+    where {hiBuildSQL$where$msp_encounters(start_dt, end_dt)}
+    order by 1,2,3
+    &quot;
+
+    exprs = as.list(substitute(list(...))[-1])
+    for (expr in exprs) q = eval(expr, envir = environment())
+    hsiaR:::glue_iterative(q)
+  }</code></pre>
+</div>
 </div>
 </section>
 <section id="hibuildsql-1" class="slide level2">
 <h2>hiBuildSQL</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href></a>hiBuildSQL<span class="sc">$</span>select<span class="sc">$</span>msp_encounters <span class="ot">=</span> <span class="st">&quot;</span></span>
-<span id="cb12-2"><a href></a><span class="st">msp.pracnum,</span></span>
-<span id="cb12-3"><a href></a><span class="st">trunc(servdt) as servdt,</span></span>
-<span id="cb12-4"><a href></a><span class="st">clnt.mrg_clnt_anon_idnt_id as clnt_label,</span></span>
-<span id="cb12-5"><a href></a><span class="st">pr.func_spty_cd func_spty_cd,</span></span>
-<span id="cb12-6"><a href></a><span class="st">fitm.fitm,</span></span>
-<span id="cb12-7"><a href></a><span class="st">fitm.fitm_class</span></span>
-<span id="cb12-8"><a href></a><span class="st">&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="hibuildsql-2" class="slide level2">
-<h2>hiBuildSQL</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href></a>hiBuildSQL<span class="sc">$</span>query<span class="sc">$</span>msp_encounters <span class="ot">=</span> <span class="cf">function</span>(</span>
-<span id="cb13-2"><a href></a>    <span class="at">start =</span> lubridate<span class="sc">::</span><span class="fu">today</span>() <span class="sc">-</span> <span class="fu">months</span>(<span class="dv">3</span>) <span class="sc">-</span> <span class="fu">years</span>(<span class="dv">5</span>), </span>
-<span id="cb13-3"><a href></a>    <span class="at">end =</span> lubridate<span class="sc">::</span><span class="fu">today</span>() <span class="sc">-</span> <span class="fu">months</span>(<span class="dv">3</span>)) {</span>
-<span id="cb13-4"><a href></a>  <span class="fu">paste0</span>(</span>
-<span id="cb13-5"><a href></a>    hsiaR<span class="sc">:::</span><span class="fu">glue_wrapper</span>(<span class="st">&quot;</span></span>
-<span id="cb13-6"><a href></a><span class="st">      select distinct {hiBuildSQL$select$msp_encounters}</span></span>
-<span id="cb13-7"><a href></a><span class="st">      from {hiBuildSQL$from$msp_encounters}&quot;</span>),</span>
-<span id="cb13-8"><a href></a>    <span class="st">&quot;</span><span class="sc">\n</span><span class="st">where</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
-<span id="cb13-9"><a href></a>    <span class="st">&quot;servdt between date &#39;&quot;</span>, start,</span>
-<span id="cb13-10"><a href></a>    <span class="st">&quot;&#39; and date &#39;&quot;</span>, end, <span class="st">&quot;&#39; &quot;</span>,</span>
-<span id="cb13-11"><a href></a>    hsiaR<span class="sc">:::</span><span class="fu">glue_wrapper</span>(<span class="st">&quot;and {hiBuildSQL$where$msp_encounters}&quot;</span>),</span>
-<span id="cb13-12"><a href></a>    <span class="st">&quot;</span><span class="sc">\n</span><span class="st">order by 1,2,3&quot;</span></span>
-<span id="cb13-13"><a href></a>  ) <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">sql</span>()</span>
-<span id="cb13-14"><a href></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="hibuildsql-3" class="slide level2">
-<h2>hiBuildSQL</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href></a>hiBuildSQL<span class="sc">$</span>query<span class="sc">$</span><span class="fu">msp_encounters</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href></a>hiBuildSQL<span class="sc">$</span>query<span class="sc">$</span><span class="fu">msp_encounters</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;SQL&gt; select distinct 
-msp.pracnum,
+<pre><code>&lt;SQL&gt; select distinct msp.pracnum,
 trunc(servdt) as servdt,
-clnt.mrg_clnt_anon_idnt_id as clnt_label,
-pr.func_spty_cd func_spty_cd,
-fitm.fitm,
-fitm.fitm_class
-
-from 
-ahip.AR_MSPCLM_CORE_CAN msp
+clnt.mrg_clnt_anon_idnt_id as clnt_label
+from ahip.AR_MSPCLM_CORE_CAN msp
 left join AHIP.CB_DTL_DM_CLNT_VW clnt ON clnt.label = msp.clnt_label
 left join MSEA_TEAM_LVL2.LAB_PROVIDER lab ON msp.payenum=LPAD(lab.payenum, 5, &#39;0&#39;)
 left join ahip.cb_dtl_dm_srv_date_vw dt ON msp.servdt = dt.srv_date
-left join msea_team_lvl2.fitm_class fitm on msp.fitm=fitm.fitm
+left join ahip.fitmds fitm on msp.fitm=fitm.fitm
 left join ahip.CB_DTL_FT_PRACRSTFYR_VWD pr on dt.SRV_FISC_YR=pr.FISC_YR and msp.pracnum=PRAC_BLLG_NUM
-where
-servdt between date &#39;2020-10-08&#39; and date &#39;2025-10-08&#39; and (
-  pracnum is not null
-  and (clmtp in (&#39;MM&#39;,&#39;MA&#39;,&#39;MB&#39;,&#39;MH&#39;,&#39;MN&#39;,&#39;MS&#39;,&#39;PM&#39;) or (servcd=13 and clmtp = &#39;PB&#39;))
-  and not msp.fitm in (15501,15601)
-  and ((PAYESTAT IN (&#39;Y&#39;,&#39;F&#39;)  AND (ENCTR_CLM_MSPD IS NOT NULL OR (ENCTR_CLM_MSPD IS NULL AND PAIDSERV &gt;0) )) OR (PAYESTAT NOT IN (&#39;Y&#39;,&#39;F&#39;)  AND PAIDSERV &gt;0))
-  )
-and not (
-  lab.payenum is not null
-  and (
-    (servcd = 93 and payestat in (&#39;C&#39;, &#39;H&#39;, &#39;L&#39;))
-    or (servcd = 94 and msp.fitm &lt;&gt; 90665)
-    or (servcd = 94 and msp.fitm = 90665 and payestat in (&#39;C&#39;, &#39;H&#39;, &#39;L&#39;))
-    or (servcd = 98 and msp.fitm in (00012,90000) and payestat in (&#39;C&#39;, &#39;H&#39;, &#39;L&#39;))
-  )
-  )
-and not (
-  (fitmdesc like &#39;%15 MIN%&#39; and fitmdesc like &#39;%LFP%&#39;) or
-  fitmdesc like &#39;%INCENTIVE%&#39; or
-  fitmdesc like &#39;%PCN PANEL%&#39; or
-  fitmdesc like &#39;%PRIMARY CARE PANE%&#39; or
-  fitmdesc like &#39;%PCN ATTACH%&#39; or
-  fitmdesc like &#39;%PCN DETACH%&#39; or
-  fitmdesc like &#39;%PCN PANEL%&#39; or
-  fitmdesc like &#39;%MANAGEMENT FEE%&#39; or
-  fitmdesc like &#39;%CARE TIME%&#39; or
-  fitmdesc like &#39;%ENROLMENT CODE%&#39; or
-  fitmdesc like &#39;%REGISTRATION CODE%&#39; OR
-  fitmdesc like &#39;%TRANSITION CODE%&#39;  OR
-  fitmdesc like &#39;%PREMIUM%&#39; OR
-  fitmdesc like &#39;%SURCHARGE%&#39;
-  )
-and not (
-  msp.fitm = 39
-  or servcd in (12,17,9,19,29,49,71)
-  or msp.fitm in (98111,98112)
-  )
+where msp.servdt between date &#39;2025-10-15&#39; and date &#39;2020-10-15&#39;
+and (pracnum is not null
+and (clmtp in (&#39;MM&#39;,&#39;MA&#39;,&#39;MB&#39;,&#39;MH&#39;,&#39;MN&#39;,&#39;MS&#39;,&#39;PM&#39;) or (servcd=13 and clmtp = &#39;PB&#39;))
+and not msp.fitm in (15501,15601)
+and ((PAYESTAT IN (&#39;Y&#39;,&#39;F&#39;)  AND (ENCTR_CLM_MSPD IS NOT NULL OR (ENCTR_CLM_MSPD IS NULL AND PAIDSERV &gt;0) )) OR (PAYESTAT NOT IN (&#39;Y&#39;,&#39;F&#39;)  AND PAIDSERV &gt;0)))
+and not (lab.payenum is not null
+and (
+  (servcd = 93 and payestat in (&#39;C&#39;, &#39;H&#39;, &#39;L&#39;))
+  or (servcd = 94 and msp.fitm &lt;&gt; 90665)
+  or (servcd = 94 and msp.fitm = 90665 and payestat in (&#39;C&#39;, &#39;H&#39;, &#39;L&#39;))
+  or (servcd = 98 and msp.fitm in (00012,90000) and payestat in (&#39;C&#39;, &#39;H&#39;, &#39;L&#39;))
+))
+and not ((fitmdesc like &#39;%15 MIN%&#39; and fitmdesc like &#39;%LFP%&#39;) or
+fitmdesc like &#39;%INCENTIVE%&#39; or
+fitmdesc like &#39;%PCN PANEL%&#39; or
+fitmdesc like &#39;%PRIMARY CARE PANE%&#39; or
+fitmdesc like &#39;%PCN ATTACH%&#39; or
+fitmdesc like &#39;%PCN DETACH%&#39; or
+fitmdesc like &#39;%PCN PANEL%&#39; or
+fitmdesc like &#39;%MANAGEMENT FEE%&#39; or
+fitmdesc like &#39;%CARE TIME%&#39; or
+fitmdesc like &#39;%ENROLMENT CODE%&#39; or
+fitmdesc like &#39;%REGISTRATION CODE%&#39; OR
+fitmdesc like &#39;%TRANSITION CODE%&#39;  OR
+fitmdesc like &#39;%PREMIUM%&#39; OR
+fitmdesc like &#39;%SURCHARGE%&#39;)
+and not (msp.fitm = 39
+or servcd in (12,17,9,19,29,49,71)
+or msp.fitm in (98111,98112))
 AND CLNT.MRG_CLNT_TP_CD = &#39;I&#39;
 order by 1,2,3</code></pre>
 </div>
 </div>
 </section>
+<section id="hibuildsql-2" class="slide level2">
+<h2>hiBuildSQL</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href></a>hiBuildSQL<span class="sc">$</span>select<span class="sc">$</span>msp_encounters <span class="ot">=</span> <span class="st">&quot;</span></span>
+<span id="cb20-2"><a href></a><span class="st">  distinct msp.pracnum,</span></span>
+<span id="cb20-3"><a href></a><span class="st">  trunc(servdt) as servdt,</span></span>
+<span id="cb20-4"><a href></a><span class="st">  clnt.mrg_clnt_anon_idnt_id as clnt_label</span></span>
+<span id="cb20-5"><a href></a><span class="st">  fitm.fitm,</span></span>
+<span id="cb20-6"><a href></a><span class="st">  fitm.fitm_class</span></span>
+<span id="cb20-7"><a href></a><span class="st">&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
 <section id="toy-df" class="slide level2">
 <h2>Toy df</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href></a>query <span class="ot">=</span> hiBuildSQL<span class="sc">$</span>query<span class="sc">$</span><span class="fu">msp_encounters</span>(<span class="at">start =</span> <span class="st">&quot;2025-01-01&quot;</span>, <span class="at">end =</span> <span class="st">&quot;2025-01-03&quot;</span>)</span>
-<span id="cb16-2"><a href></a></span>
-<span id="cb16-3"><a href></a><span class="cf">if</span> (fs<span class="sc">::</span><span class="fu">file_exists</span>(<span class="st">&quot;data/msp_encounters.Rds&quot;</span>)) msp_encounters <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="st">&quot;data/msp_encounters.Rds&quot;</span>) <span class="cf">else</span> msp_encounters <span class="ot">=</span> <span class="fu">hiQuery</span>(query, <span class="at">print_interpolated_query =</span> F, <span class="at">con =</span> <span class="fu">hiConnect</span>()); <span class="fu">saveRDS</span>(msp_encounters, <span class="st">&quot;data/msp_encounters.Rds&quot;</span>)</span>
-<span id="cb16-4"><a href></a></span>
-<span id="cb16-5"><a href></a>msp_encounters <span class="sc">|&gt;</span> <span class="fu">slice_sample</span>(<span class="at">n=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 10 × 6
-   pracnum servdt              clnt_label          func_spty_cd  fitm fitm_class
-   &lt;chr&gt;   &lt;dttm&gt;              &lt;chr&gt;               &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;     
- 1 J6925   2025-01-02 00:00:00 3363442678492701878 09            3011 unknown   
- 2 59282   2025-01-02 00:00:00 3279559514158542662 00             100 unknown   
- 3 30818   2025-01-03 00:00:00 3699275853164424485 00           98032 not a vis…
- 4 59235   2025-01-02 00:00:00 1680000470706832581 00           98032 not a vis…
- 5 26193   2025-01-02 00:00:00 3638579963125578517 01           13637 unknown   
- 6 28760   2025-01-02 00:00:00 867634323410079663  06           22067 unknown   
- 7 44077   2025-01-02 00:00:00 3743636030086514570 00           98032 not a vis…
- 8 J1700   2025-01-02 00:00:00 2000324183099269233 00           98031 not a vis…
- 9 88290   2025-01-03 00:00:00 2868791351768122402 39            2882 unknown   
-10 82634   2025-01-03 00:00:00 1415498844229336684 11           51016 unknown   </code></pre>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href></a>query <span class="ot">=</span> hiBuildSQL<span class="sc">$</span>query<span class="sc">$</span><span class="fu">msp_encounters</span>(<span class="at">start =</span> <span class="st">&quot;2025-01-01&quot;</span>, <span class="at">end =</span> <span class="st">&quot;2025-01-03&quot;</span>)</span>
+<span id="cb21-2"><a href></a></span>
+<span id="cb21-3"><a href></a><span class="cf">if</span> (fs<span class="sc">::</span><span class="fu">file_exists</span>(<span class="st">&quot;data/msp_encounters.Rds&quot;</span>)) msp_encounters <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="st">&quot;data/msp_encounters.Rds&quot;</span>) <span class="cf">else</span> msp_encounters <span class="ot">=</span> <span class="fu">hiQuery</span>(query, <span class="at">print_interpolated_query =</span> F, <span class="at">con =</span> <span class="fu">hiConnect</span>()); <span class="fu">saveRDS</span>(msp_encounters, <span class="st">&quot;data/msp_encounters.Rds&quot;</span>)</span>
+<span id="cb21-4"><a href></a></span>
+<span id="cb21-5"><a href></a>msp_encounters <span class="ot">=</span> msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb21-6"><a href></a>  <span class="fu">mutate</span>(<span class="at">servdt =</span> <span class="fu">as.Date</span>(servdt)) <span class="sc">|&gt;</span></span>
+<span id="cb21-7"><a href></a>  <span class="fu">mutate</span>(<span class="at">func_spty_cd =</span> <span class="fu">as.integer</span>(func_spty_cd))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="clean" class="slide level2">
-<h2>Clean</h2>
+<section id="toy-df-1" class="slide level2">
+<h2>Toy df</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href></a>msp_encounters <span class="ot">=</span> msp_encounters <span class="sc">|&gt;</span></span>
-<span id="cb18-2"><a href></a>  <span class="fu">mutate</span>(<span class="at">servdt =</span> <span class="fu">as.Date</span>(servdt)) <span class="sc">|&gt;</span></span>
-<span id="cb18-3"><a href></a>  <span class="fu">mutate</span>(<span class="at">func_spty_cd =</span> <span class="fu">as.integer</span>(func_spty_cd))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href></a>msp_encounters <span class="sc">|&gt;</span> <span class="fu">slice_sample</span>(<span class="at">n=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 6
+   pracnum servdt     clnt_label          func_spty_cd  fitm fitm_class 
+   &lt;chr&gt;   &lt;date&gt;     &lt;chr&gt;                      &lt;int&gt; &lt;dbl&gt; &lt;chr&gt;      
+ 1 27733   2025-01-03 1310844209764425238            0 98031 not a visit
+ 2 28437   2025-01-02 1674610713775937212            0 13781 unknown    
+ 3 64372   2025-01-02 2733430749101524464            8  7707 unknown    
+ 4 65348   2025-01-03 3075131880907372252           26 33018 unknown    
+ 5 29068   2025-01-02 3965915361854778328            0 98031 not a visit
+ 6 85250   2025-01-02 938589488571414217            49   935 unknown    
+ 7 62271   2025-01-02 433313104489071799            10 51007 unknown    
+ 8 J6412   2025-01-03 442706445568052697             0 13537 unknown    
+ 9 60670   2025-01-02 92990385791100030              0 13637 unknown    
+10 35160   2025-01-03 455482818118000535             0 98032 not a visit</code></pre>
+</div>
 </div>
 </section></section>
 <section>
-<section id="incorporate-relevant-external-information-on-pracs-eg-scrubs" class="title-slide slide level1 center">
-<h1>3. Incorporate relevant external information on pracs (eg SCRUBS)</h1>
+<section id="obtain-relevant-external-information-on-pracs" class="title-slide slide level1 center">
+<h1>3. Obtain relevant external information on pracs</h1>
 
 </section>
 <section id="section" class="slide level2">
 <h2>???</h2>
 <ul>
 <li>I have no idea about this part</li>
-<li>Ignore for now</li>
+<li>SCRUBS? Prac roster?</li>
 </ul>
 </section></section>
 <section>
-<section id="classify-pracs-from-2-and-3" class="title-slide slide level1 center">
-<h1>4. Classify pracs from (2) and (3)</h1>
+<section id="classify-each-prac" class="title-slide slide level1 center">
+<h1>4. Classify each prac</h1>
 
 </section>
 <section id="counts-per-day" class="slide level2">
 <h2>Counts per day</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
-<span id="cb19-2"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb24-2"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 26,241 × 5
    pracnum func_spty_cd servdt     fitm_class      n
@@ -1376,9 +1396,9 @@ order by 1,2,3</code></pre>
 <section id="example-22895" class="slide level2">
 <h2>Example: 22895</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
-<span id="cb21-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
-<span id="cb21-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb26-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
+<span id="cb26-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 13 × 5
    pracnum func_spty_cd servdt     fitm_class        n
@@ -1402,14 +1422,14 @@ order by 1,2,3</code></pre>
 <section id="example-22895-1" class="slide level2">
 <h2>Example: 22895</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
-<span id="cb23-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
-<span id="cb23-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
-<span id="cb23-4"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb23-5"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
-<span id="cb23-6"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
-<span id="cb23-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> fitm_class, <span class="at">values_from =</span> perc) <span class="sc">|&gt;</span></span>
-<span id="cb23-8"><a href></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="dv">4</span><span class="sc">:</span><span class="fu">last_col</span>(), <span class="sc">~</span><span class="fu">replace_na</span>(., <span class="dv">0</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb28-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb28-4"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb28-5"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
+<span id="cb28-6"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
+<span id="cb28-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> fitm_class, <span class="at">values_from =</span> perc) <span class="sc">|&gt;</span></span>
+<span id="cb28-8"><a href></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="dv">4</span><span class="sc">:</span><span class="fu">last_col</span>(), <span class="sc">~</span><span class="fu">replace_na</span>(., <span class="dv">0</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 8
   pracnum func_spty_cd servdt     advice emergency `mental health` unknown
@@ -1421,21 +1441,21 @@ order by 1,2,3</code></pre>
 </div>
 </div>
 </section>
-<section id="example-22895-with-running-totals" class="slide level2">
-<h2>Example: 22895 with running totals</h2>
+<section id="example-22895-2" class="slide level2">
+<h2>Example: 22895</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
-<span id="cb25-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
-<span id="cb25-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
-<span id="cb25-4"><a href></a>  <span class="fu">group_by</span>(pracnum, func_spty_cd, fitm_class) <span class="sc">|&gt;</span></span>
-<span id="cb25-5"><a href></a>  <span class="fu">arrange</span>(servdt) <span class="sc">|&gt;</span></span>
-<span id="cb25-6"><a href></a>  <span class="fu">mutate</span>(<span class="at">n =</span> <span class="fu">cumsum</span>(n)) <span class="sc">|&gt;</span></span>
-<span id="cb25-7"><a href></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb25-8"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb25-9"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
-<span id="cb25-10"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
-<span id="cb25-11"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> fitm_class, <span class="at">values_from =</span> perc) <span class="sc">|&gt;</span></span>
-<span id="cb25-12"><a href></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="dv">4</span><span class="sc">:</span><span class="fu">last_col</span>(), <span class="sc">~</span><span class="fu">replace_na</span>(., <span class="dv">0</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href></a>msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb30-2"><a href></a>  <span class="fu">filter</span>(pracnum <span class="sc">==</span> <span class="dv">22895</span>) <span class="sc">|&gt;</span></span>
+<span id="cb30-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb30-4"><a href></a>  <span class="fu">group_by</span>(pracnum, func_spty_cd, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb30-5"><a href></a>  <span class="fu">arrange</span>(servdt) <span class="sc">|&gt;</span></span>
+<span id="cb30-6"><a href></a>  <span class="fu">mutate</span>(<span class="at">n =</span> <span class="fu">cumsum</span>(n)) <span class="sc">|&gt;</span></span>
+<span id="cb30-7"><a href></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb30-8"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb30-9"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
+<span id="cb30-10"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
+<span id="cb30-11"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> fitm_class, <span class="at">values_from =</span> perc) <span class="sc">|&gt;</span></span>
+<span id="cb30-12"><a href></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="dv">4</span><span class="sc">:</span><span class="fu">last_col</span>(), <span class="sc">~</span><span class="fu">replace_na</span>(., <span class="dv">0</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 8
   pracnum func_spty_cd servdt     advice emergency `mental health` unknown
@@ -1447,8 +1467,8 @@ order by 1,2,3</code></pre>
 </div>
 </div>
 </section>
-<section id="classifier-by-prac" class="slide level2">
-<h2>Classifier by prac</h2>
+<section id="summary-1" class="slide level2">
+<h2>Summary</h2>
 <ul>
 <li>ML?</li>
 <li>By day? By month? By year?</li>
@@ -1457,25 +1477,25 @@ order by 1,2,3</code></pre>
 <section id="make-the-table" class="slide level2">
 <h2>Make the table</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href></a>prac_class <span class="ot">=</span> msp_encounters <span class="sc">|&gt;</span></span>
-<span id="cb27-2"><a href></a>  <span class="fu">mutate</span>(<span class="at">fitm_class =</span> <span class="fu">str_replace_all</span>(fitm_class, <span class="st">&quot; &quot;</span>, <span class="st">&quot;_&quot;</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb27-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
-<span id="cb27-4"><a href></a>  <span class="fu">group_by</span>(pracnum, func_spty_cd, fitm_class) <span class="sc">|&gt;</span></span>
-<span id="cb27-5"><a href></a>  <span class="fu">arrange</span>(servdt) <span class="sc">|&gt;</span></span>
-<span id="cb27-6"><a href></a>  <span class="fu">mutate</span>(<span class="at">n =</span> <span class="fu">cumsum</span>(n)) <span class="sc">|&gt;</span></span>
-<span id="cb27-7"><a href></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb27-8"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb27-9"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
-<span id="cb27-10"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
-<span id="cb27-11"><a href></a>  <span class="fu">arrange</span>(pracnum, func_spty_cd, servdt, <span class="fu">desc</span>(perc))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href></a>prac_class <span class="ot">=</span> msp_encounters <span class="sc">|&gt;</span></span>
+<span id="cb32-2"><a href></a>  <span class="fu">mutate</span>(<span class="at">fitm_class =</span> <span class="fu">str_replace_all</span>(fitm_class, <span class="st">&quot; &quot;</span>, <span class="st">&quot;_&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb32-3"><a href></a>  <span class="fu">count</span>(pracnum, func_spty_cd, servdt, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb32-4"><a href></a>  <span class="fu">group_by</span>(pracnum, func_spty_cd, fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb32-5"><a href></a>  <span class="fu">arrange</span>(servdt) <span class="sc">|&gt;</span></span>
+<span id="cb32-6"><a href></a>  <span class="fu">mutate</span>(<span class="at">n =</span> <span class="fu">cumsum</span>(n)) <span class="sc">|&gt;</span></span>
+<span id="cb32-7"><a href></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb32-8"><a href></a>  <span class="fu">add_count</span>(pracnum, func_spty_cd, servdt, <span class="at">wt =</span> n, <span class="at">name =</span> <span class="st">&quot;total&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-9"><a href></a>  <span class="fu">mutate</span>(<span class="at">perc =</span> n <span class="sc">/</span> total) <span class="sc">|&gt;</span></span>
+<span id="cb32-10"><a href></a>  <span class="fu">select</span>(pracnum, func_spty_cd, servdt, fitm_class, perc) <span class="sc">|&gt;</span></span>
+<span id="cb32-11"><a href></a>  <span class="fu">arrange</span>(pracnum, func_spty_cd, servdt, <span class="fu">desc</span>(perc))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="top-class" class="slide level2">
 <h2>Top class?</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href></a>prac_class <span class="sc">|&gt;</span></span>
-<span id="cb28-2"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt) <span class="sc">|&gt;</span></span>
-<span id="cb28-3"><a href></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href></a>prac_class <span class="sc">|&gt;</span></span>
+<span id="cb33-2"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt) <span class="sc">|&gt;</span></span>
+<span id="cb33-3"><a href></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 20,856 × 5
 # Groups:   pracnum, servdt [20,856]
@@ -1498,13 +1518,13 @@ order by 1,2,3</code></pre>
 <section id="top-2-classes" class="slide level2">
 <h2>Top 2 classes?</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href></a>prac_class <span class="sc">|&gt;</span></span>
-<span id="cb30-2"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt) <span class="sc">|&gt;</span></span>
-<span id="cb30-3"><a href></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
-<span id="cb30-4"><a href></a>  <span class="fu">mutate</span>(<span class="at">rank =</span> <span class="fu">rank</span>(<span class="fu">desc</span>(perc), <span class="at">ties.method =</span> <span class="st">&quot;min&quot;</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb30-5"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt, rank) <span class="sc">|&gt;</span></span>
-<span id="cb30-6"><a href></a>  <span class="fu">summarise</span>(<span class="at">fitm_class =</span> <span class="fu">paste</span>(fitm_class, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb30-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> rank, <span class="at">values_from =</span> fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href></a>prac_class <span class="sc">|&gt;</span></span>
+<span id="cb35-2"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt) <span class="sc">|&gt;</span></span>
+<span id="cb35-3"><a href></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
+<span id="cb35-4"><a href></a>  <span class="fu">mutate</span>(<span class="at">rank =</span> <span class="fu">rank</span>(<span class="fu">desc</span>(perc), <span class="at">ties.method =</span> <span class="st">&quot;min&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb35-5"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt, rank) <span class="sc">|&gt;</span></span>
+<span id="cb35-6"><a href></a>  <span class="fu">summarise</span>(<span class="at">fitm_class =</span> <span class="fu">paste</span>(fitm_class, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb35-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> rank, <span class="at">values_from =</span> fitm_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 20,856 × 4
    pracnum servdt     `1`         `2`        
@@ -1526,14 +1546,14 @@ order by 1,2,3</code></pre>
 <section id="top-5-classes" class="slide level2">
 <h2>Top 5 classes?</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href></a>prac_class <span class="sc">|&gt;</span></span>
-<span id="cb32-2"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt) <span class="sc">|&gt;</span></span>
-<span id="cb32-3"><a href></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">5</span>) <span class="sc">|&gt;</span></span>
-<span id="cb32-4"><a href></a>  <span class="fu">mutate</span>(<span class="at">rank =</span> <span class="fu">rank</span>(<span class="fu">desc</span>(perc), <span class="at">ties.method =</span> <span class="st">&quot;min&quot;</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb32-5"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt, rank) <span class="sc">|&gt;</span></span>
-<span id="cb32-6"><a href></a>  <span class="fu">summarise</span>(<span class="at">fitm_class =</span> <span class="fu">paste</span>(fitm_class, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb32-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> rank, <span class="at">values_from =</span> fitm_class) <span class="sc">|&gt;</span></span>
-<span id="cb32-8"><a href></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">5</span><span class="st">`</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href></a>prac_class <span class="sc">|&gt;</span></span>
+<span id="cb37-2"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt) <span class="sc">|&gt;</span></span>
+<span id="cb37-3"><a href></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb37-4"><a href></a>  <span class="fu">mutate</span>(<span class="at">rank =</span> <span class="fu">rank</span>(<span class="fu">desc</span>(perc), <span class="at">ties.method =</span> <span class="st">&quot;min&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb37-5"><a href></a>  <span class="fu">group_by</span>(pracnum, servdt, rank) <span class="sc">|&gt;</span></span>
+<span id="cb37-6"><a href></a>  <span class="fu">summarise</span>(<span class="at">fitm_class =</span> <span class="fu">paste</span>(fitm_class, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb37-7"><a href></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> rank, <span class="at">values_from =</span> fitm_class) <span class="sc">|&gt;</span></span>
+<span id="cb37-8"><a href></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">5</span><span class="st">`</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 2 × 7
   pracnum servdt     `1`       `2`         `3`     `4`             `5`        

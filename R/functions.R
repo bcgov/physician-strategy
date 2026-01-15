@@ -4,7 +4,7 @@
 # - can we find out which FPs are on LFP and which aren't?
 # - do FPs switch out of hospitalism after LFP?
 
-pacman::p_load(tidyverse, hsiaR, zoo, glue)
+pacman::p_load(tidyverse, hsiaR, zoo, glue, targets)
 
 create_policies = function() {
   tribble(~policy, ~start_date, ~end_date, ~specs, ~comments,
@@ -14,7 +14,7 @@ create_policies = function() {
     mutate(end_date = replace_na(end_date, as.Date(Inf)))
 }
 
-pull_msp = function(money_variable = "paidserv", months_back = 3, years = 5, min_start_date = as.Date("2020-09-01")) {
+pull_msp = function(months_back = 3, years = 5, min_start_date = as.Date("2020-09-01")) {
 
   # - months_back: how many months since today() do you want to go back? Default is 3 cuz that's what I believe it takes for the data to settle
   # - min_start_date: A Covid adjustment; will become irrelevant soon
@@ -25,30 +25,37 @@ pull_msp = function(money_variable = "paidserv", months_back = 3, years = 5, min
   # quick covid adjustment
   start = max(start, min_start_date)
 
-  inner_query = paste0(
-    "select\n",
-    hiBuildSQL$select$msp_encounters,
-    ",\n",
-    money_variable,
-    ",\nfitm.fitm",
-    "\nfrom\n",
-    hiBuildSQL$from$msp_encounters,
-    glue::glue("\nwhere servdt between date '{start}' and date '{end}' and", .trim = F),
-    hiBuildSQL$where$msp_encounters
-  ) |>
-    sql()
-
-  query = dplyr::sql(glue::glue("
-  SELECT
+  query = "select
     pracnum,
     servdt,
-    fitm,
-    count(clnt_label) as encounters,
-    sum(paidserv) as paidserv
-  FROM (\n{inner_query}\n)
-  GROUP BY pracnum, servdt, fitm
-  ORDER BY 1,2
-  "))
+    clnt.mrg_clnt_anon_idnt_id as clnt_label,
+    fitm.fitm,
+    servloc,
+    sum(expdamt) as expdamt
+  from
+    {hiBuildSQL$from$msp_encounters}
+  where
+    {hiBuildSQL$where$msp_encounters(start, end)}
+  group by
+    pracnum,
+    servdt,
+    clnt.mrg_clnt_anon_idnt_id,
+    fitm.fitm,
+    servloc
+  "
+
+  # query = dplyr::sql(glue::glue("
+  # SELECT
+  #   pracnum,
+  #   servdt,
+  #   fitm,
+  #   servloc,
+  #   count(clnt_label) as encounters,
+  #   sum(expdamt) as expdamt
+  # FROM ({inner_query})
+  # GROUP BY pracnum, servdt, fitm, servloc
+  # ORDER BY 1,2,3,4
+  # "))
 
   hiQuery(query, run_query = T, con=hiConnect())
 }
@@ -77,7 +84,8 @@ clean_vt4 = function(vt4_raw) {
   vt4 = vt4_raw |>
     mutate(across(prac_age, as.integer)) |>
     mutate(across(c(pracnum, ha_cd, hsda_cd, lha_cd, chsa_cd), fct_inseq)) |>
-    mutate(across(c(funcspec), ~fct_inseq(as.character(.))))
+    mutate(across(c(funcspec), ~fct_inseq(as.character(.)))) |>
+    arrange(pracnum, fiscal)
 }
 
 get_msp_fp = function(msp, vt4, fitms, policies) {
