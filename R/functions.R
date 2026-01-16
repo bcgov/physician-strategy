@@ -19,17 +19,24 @@ pull_msp_encounters = function(start_date = as.Date("2021-10-01"), end_date = as
   select
     pracnum,
     srv_mth,
-    count(distinct clnt_label) as encounters
+    count(*) as encounters,
+    sum(expdamt) as expdamt
   from (
-    select distinct
+    select
       pracnum,
       srv_mth,
       servdt,
-      clnt.mrg_clnt_anon_idnt_id as clnt_label
+      clnt.mrg_clnt_anon_idnt_id as clnt_label,
+      sum(expdamt) as expdamt
     from
       {hiBuildSQL$from$msp_encounters}
     where
       {hiBuildSQL$where$msp_encounters(start_date, end_date)}
+    group by
+      pracnum,
+      srv_mth,
+      servdt,
+      clnt.mrg_clnt_anon_idnt_id
     )
   group by
     pracnum,
@@ -46,8 +53,7 @@ pull_msp_fitms = function(start_date = as.Date("2021-10-01"), end_date = as.Date
     dt.srv_mth,
     fitm.fitm,
     msp.servloc,
-    count(*) as n,
-    sum(expdamt) as expdamt
+    count(*) as n
   from
     {hiBuildSQL$from$msp_encounters}
   where
