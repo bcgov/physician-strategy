@@ -14,68 +14,71 @@ create_policies = function() {
     mutate(end_date = replace_na(end_date, as.Date(Inf)))
 }
 
-pull_msp = function(months_back = 3, years = 5, min_start_date = as.Date("2020-09-01")) {
-
-  # - months_back: how many months since today() do you want to go back? Default is 3 cuz that's what I believe it takes for the data to settle
-  # - min_start_date: A Covid adjustment; will become irrelevant soon
-
-  end = floor_date(today()  - months(months_back), unit = "month") - 1
-  start = floor_date(end - years(years), unit = "month")
-
-  # quick covid adjustment
-  start = max(start, min_start_date)
-
-  query = "select
+pull_msp_encounters = function(start_date = as.Date("2021-10-01"), end_date = as.Date("2025-10-31")) {
+  encounters_query = "
+  select
     pracnum,
-    servdt,
-    clnt.mrg_clnt_anon_idnt_id as clnt_label,
+    srv_mth,
+    count(distinct clnt_label) as encounters
+  from (
+    select distinct
+      pracnum,
+      srv_mth,
+      servdt,
+      clnt.mrg_clnt_anon_idnt_id as clnt_label
+    from
+      {hiBuildSQL$from$msp_encounters}
+    where
+      {hiBuildSQL$where$msp_encounters(start_date, end_date)}
+    )
+  group by
+    pracnum,
+    srv_mth
+  "
+
+  hiQuery(encounters_query, run_query = T, con=hiConnect())
+}
+
+pull_msp_fitms = function(start_date = as.Date("2021-10-01"), end_date = as.Date("2025-10-31")) {
+  fitms_query = "
+  select
+    msp.pracnum,
+    dt.srv_mth,
     fitm.fitm,
-    servloc,
+    msp.servloc,
+    count(*) as n,
     sum(expdamt) as expdamt
   from
     {hiBuildSQL$from$msp_encounters}
   where
-    {hiBuildSQL$where$msp_encounters(start, end)}
+    {hiBuildSQL$where$msp_encounters(start_date, end_date)}
   group by
-    pracnum,
-    servdt,
-    clnt.mrg_clnt_anon_idnt_id,
+    msp.pracnum,
+    dt.srv_mth,
     fitm.fitm,
-    servloc
+    msp.servloc
   "
 
-  # query = dplyr::sql(glue::glue("
-  # SELECT
-  #   pracnum,
-  #   servdt,
-  #   fitm,
-  #   servloc,
-  #   count(clnt_label) as encounters,
-  #   sum(expdamt) as expdamt
-  # FROM ({inner_query})
-  # GROUP BY pracnum, servdt, fitm, servloc
-  # ORDER BY 1,2,3,4
-  # "))
-
-  hiQuery(query, run_query = T, con=hiConnect())
+  hiQuery(fitms_query, run_query = T, con=hiConnect())
 }
+
 
 pull_fitms = function() {
   hiQuery("select * from ahip.fitmds", con=hiConnect())
 }
 
 pull_vt4 = function() {
-  hiQuery("select * from msea_team_lvl2.vt4 where fiscal > '2019/202'", con=hiConnect())
+  hiQuery("select * from msea_team_lvl2.vt4 where fiscal > '2020/2021'", con=hiConnect())
 }
 
 
-clean_msp = function(msp_raw) {
-  stopifnot(sum(is.na(msp_raw)) == 0)
-  msp_raw |>
-    mutate(encounters = as.integer(encounters)) |>
-    mutate(servdt = as.Date(servdt)) |>
-    mutate(yearmon = zoo::as.yearmon(servdt)) |>
-    mutate(fiscal = as_fiscal(servdt, example_format = "2020/2021"))
+clean_msp = function(df) {
+  df |>
+    na.omit() |>
+    mutate(across(any_of(c("fitm", "n", "encounters")), as.integer)) |>
+    mutate(srv_mth = zoo::as.yearmon(srv_mth, "%b-%Y")) |>
+    mutate(fiscal = as_fiscal(srv_mth, example_format = "2020/2021")) |>
+    arrange(pracnum, srv_mth)
 }
 
 
@@ -88,15 +91,15 @@ clean_vt4 = function(vt4_raw) {
     arrange(pracnum, fiscal)
 }
 
-get_msp_fp = function(msp, vt4, fitms, policies) {
+get_msp_fp = function(df, vt4, policies) {
 
   # midpoint: the start of LFP; so we want roughly equal number of days before and after
-  midpoint = filter(policies, policy == "LFP")$start_date
+  midpoint = filter(policies, policy == "LFP")$start_date |> zoo::as.yearmon()
 
-  end = max(msp$servdt)
+  end = max(df$srv_mth)
   elapsed = end - midpoint
-  start = floor_date(midpoint - elapsed, "month")
-  start = max(start, min(msp$servdt))
+  start = midpoint - elapsed
+  start = max(start, min(df$srv_mth))
 
   fp_specs = policies |>
     filter(policy == "LFP") |>
@@ -107,19 +110,10 @@ get_msp_fp = function(msp, vt4, fitms, policies) {
     filter(funcspec %in% fp_specs) |>
     select(pracnum, fiscal, funcspec, ha_cd, prac_age, prac_gender)
 
-  msp_fp = msp |>
-    filter(between(servdt, start, end)) |>
+  df |>
+    filter(between(srv_mth, start, end)) |>
     inner_join(vt4_fps, by=join_by(pracnum, fiscal)) |>
-    left_join(fitms) |>
-    mutate(is_LFP = between(servdt, policies$start_date, policies$end_date))
-
-  stopifnot(
-    msp_fp |>
-      count(pracnum, servdt) |>
-      pull(n) |>
-      unique() == 1
-  )
-  msp_fp
+    mutate(is_LFP = between(srv_mth, zoo::as.yearmon(policies$start_date), zoo::as.yearmon(ifelse(is.infinite(policies$end_date), "Dec 3000", policies$end_date))))
 }
 
 pull_cihi = function(file = Sys.getenv("CIHI_PATH")) {
@@ -133,6 +127,10 @@ pull_cihi = function(file = Sys.getenv("CIHI_PATH")) {
     mutate(across(c("year", "specialty_sort", "statistics_canada_population", "net_migration_between_canadian_jurisdictions", starts_with(c("number", "age_group", "place_of", "university_of", "years_since"))), as.integer)) |>
     mutate(across(c("phys_pop_ratio", starts_with(c("average", "median"))), as.double)) |>
     mutate(across(c(jurisdiction, health_region, specialty), fct))
+}
+
+pull_hsptlst = function(file = Sys.getenv("HSPTLST_PATH")) {
+  readxl::read_excel(file, sheet=2)
 }
 
 clean_cihi = function(cihi_raw, policies) {

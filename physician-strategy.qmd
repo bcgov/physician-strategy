@@ -34,7 +34,7 @@ execute:
 
 pacman::p_load(targets, hsiaR, tidyverse, reactable, htmltools, scales)
 
-tar_load(c('policies', 'msp_fp', 'cihi', 'vt4', 'vt4_switches'))
+tar_load(c('policies', 'msp_fp_encounters', 'msp_fp_fitms', 'cihi', 'vt4', 'vt4_switches'))
 
 source("R/functions.R")
 
@@ -63,8 +63,8 @@ Here are all the "pull" functions we are gonna use:
 ```{r}
 #| collapse: true
 #| 
-print(pull_msp)
-print(pull_vt4)
+print(pull_msp_encounters)
+print(pull_msp_fitms)
 ```
 
 
@@ -72,80 +72,56 @@ print(pull_vt4)
 
 In this section, we analyze the impact of the [Longitudinal Family Physician Payment Model (LFP)](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/msp/physicians/longitudinal-family-physician-lfp-payment-model). This affects family doctors (FPs) only; the FPs specs are `r filter(policies, policy=='LFP')$specs[[1]] |> paste(collapse = ", ")`. The LFP model began `r filter(policies, policy=='LFP')$start_date |> format("%B %d, %Y")`. We will use that date as the threshold, although maybe we can get better info as to who is on LFP and who isn't.
 
-The date range for our data is from `r min(msp_fp$servdt)` to `r max(msp_fp$servdt)`. Note that we attempt to gather roughly equal-sized dates before and after LFP, truncating data from the most recent 3 months, and only considering entire months. Also, I have set a minimum start date for September 1, 2020 due to Covid.
+The date range for our data is from `r min(msp_fp_encounters$srv_mth)` to `r max(msp_fp_encounters$srv_mth)`. Note that we attempt to gather roughly equal-sized dates before and after LFP, truncating data from the most recent 3 months, and only considering entire months. Also, I have set a minimum start date for September 1, 2020 due to Covid.
 
 ## Data
 
 Here, we show summary statistics for encounters and demonstrate the large right skew.
 
 ```{r}
-msp_fp |>
-  group_by(is_LFP, yearmon) |>
+msp_fp_encounters |>
+  group_by(is_LFP, srv_mth) |>
   summarise(mean = round(mean(encounters)), sum = sum(encounters)) |>
   mutate(across(where(is.numeric), label_comma())) |>
-  mutate(yearmon = as.character(yearmon)) |>
-  reactable()
+  reactable(bordered = T)
 ```
 
 
 ```{r}
-df = msp_fp |>
-  group_by(pracnum, yearmon, is_LFP) |>
-  summarise(encounters = sum(encounters), paidserv = sum(paidserv))
-
-print(skimr::skim(df$encounters), include_summary = F)
-
-df |>
+msp_fp_encounters |>
+  group_by(pracnum, srv_mth, is_LFP) |>
+  summarise(encounters = sum(encounters)) |>
   ggplot(aes(y=is_LFP, x=encounters, color=is_LFP)) +
   geom_boxplot() +
   nice_gg() +
   scale_colour_viridis_d() +
   scale_x_continuous(labels = label_comma()) +
   theme(legend.position = 'none') +
-  ggtitle("Boxplot of total encounters per FP") |>
-  print()
+  ggtitle("Boxplot of total encounters per FP")
+```
 
-df |>
+```{r}
+msp_fp_encounters |>
+  group_by(pracnum, srv_mth, is_LFP) |>
+  summarise(encounters = sum(encounters)) |>
   ggplot(aes(x=encounters, color=is_LFP)) +
   geom_density() +
   nice_gg() +
   scale_colour_viridis_d() +
   scale_x_continuous(labels = label_comma()) +
   theme(legend.position = 'bottom') +
-  ggtitle("Density plot of total encounters per FP") |>
-  print()
-
-df |>
-  ggplot(aes(y=is_LFP, x=paidserv, color=is_LFP)) +
-  geom_boxplot() +
-  nice_gg() +
-  scale_colour_viridis_d() +
-  scale_x_continuous(labels = label_currency()) +
-  theme(legend.position = 'none') +
-  ggtitle("Boxplot of paidserv per FP") |>
-  print()
-
-df |>
-  ggplot(aes(x=paidserv, color=is_LFP)) +
-  geom_density() +
-  nice_gg() +
-  scale_colour_viridis_d() +
-  scale_x_continuous(labels = label_comma()) +
-  theme(legend.position = 'bottom') +
-  ggtitle("Density plot of paidserv per FP") |>
-  print()
+  ggtitle("Density plot of total encounters per FP")
 ```
-
 
 ## Time Series Plots
 
 In the following graphs, the vertical red line shows LFP implementation.
 
 ```{r}
-msp_fp |>
-  group_by(yearmon, is_LFP) |>
+msp_fp_encounters |>
+  group_by(srv_mth, is_LFP) |>
   summarise(encounters = sum(encounters)) |>
-  ggplot(aes(x=yearmon, y=encounters, color=is_LFP)) +
+  ggplot(aes(x=srv_mth, y=encounters, color=is_LFP)) +
   geom_point() +
   geom_line() +
   geom_smooth(method = 'lm', se = F) +
@@ -160,12 +136,12 @@ msp_fp |>
 ```
 
 ```{r}
-msp_fp |>
-  group_by(pracnum, yearmon, is_LFP) |>
+msp_fp_encounters |>
+  group_by(pracnum, srv_mth, is_LFP) |>
   summarise(encounters = sum(encounters)) |>
-  group_by(yearmon, is_LFP) |>
+  group_by(srv_mth, is_LFP) |>
   summarise(encounters = mean(encounters)) |>
-  ggplot(aes(x=yearmon, y=encounters, color=is_LFP)) +
+  ggplot(aes(x=srv_mth, y=encounters, color=is_LFP)) +
   geom_point() +
   geom_line() +
   geom_smooth(method = 'lm', se = F) +
@@ -180,10 +156,10 @@ msp_fp |>
 ```
 
 ```{r}
-msp_fp |>
-  group_by(yearmon, is_LFP) |>
+msp_fp_encounters |>
+  group_by(srv_mth, is_LFP) |>
   summarise(n_pracs = n_distinct(pracnum), .groups = 'drop') |>
-  ggplot(aes(x=yearmon, y=n_pracs, color=is_LFP)) +
+  ggplot(aes(x=srv_mth, y=n_pracs, color=is_LFP)) +
   geom_point() +
   geom_line() +
   geom_smooth(method = 'lm', se = F) +
@@ -198,10 +174,10 @@ msp_fp |>
 ```
 
 ```{r}
-msp_fp |>
-  group_by(yearmon, is_LFP) |>
-  summarise(paidserv = sum(paidserv)) |>
-  ggplot(aes(x=yearmon, y=paidserv, color=is_LFP)) +
+msp_fp_fitms |>
+  group_by(srv_mth, is_LFP) |>
+  summarise(expdamt = sum(expdamt)) |>
+  ggplot(aes(x=srv_mth, y=expdamt, color=is_LFP)) +
   geom_point() +
   geom_line() +
   geom_smooth(method = 'lm', se = F) +
@@ -212,16 +188,21 @@ msp_fp |>
   theme(legend.position = 'none') +
   labs(x=NULL, y=NULL) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
-  ggtitle("paidserv")
+  ggtitle("expdamt")
 ```
 
 ```{r}
-msp_fp |>
-  group_by(yearmon, is_LFP) |>
-  summarise(encounters = sum(encounters), paidserv = sum(paidserv)) |>
-  ungroup() |>
-  mutate(paidserv_per_enc = paidserv / encounters) |>
-  ggplot(aes(x=yearmon, y=paidserv_per_enc, color=is_LFP)) +
+inner_join(
+  msp_fp_encounters |>
+    group_by(srv_mth, is_LFP) |>
+    summarise(encounters = sum(encounters))
+  ,
+  msp_fp_fitms |>
+    group_by(srv_mth, is_LFP) |>
+    summarise(expdamt = sum(expdamt))
+) |>
+  mutate(expdamt_per_enc = expdamt / encounters) |>
+  ggplot(aes(x=srv_mth, y=expdamt_per_enc, color=is_LFP)) +
   geom_point() +
   geom_line() +
   geom_smooth(method = 'lm', se = F) +
@@ -232,7 +213,7 @@ msp_fp |>
   theme(legend.position = 'none') +
   labs(x=NULL, y=NULL) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
-  ggtitle("paidserv per encounter")
+  ggtitle("expdamt per encounter")
 ```
 
 
@@ -366,8 +347,8 @@ Here, we test whether the mean of a variable is statistically different before a
 ```{r}
 vars = c("encounters", "pracs", "encounters_per_prac")
 
-df = msp_fp |>
-  group_by(yearmon, is_LFP) |>
+df = msp_fp_encounters |>
+  group_by(srv_mth, is_LFP) |>
   summarise(
     encounters = sum(encounters),
     pracs = n_distinct(pracnum),
@@ -409,13 +390,13 @@ We can conclude that in general there are significant differences before and aft
 In this section, we run paired mean tests. These are specific to individual doctors---we are asking whether individual doctors' mean number of encounters changes following LFP implementation. As before, we consider non-parametric tests, since the data are not Gaussian. 
 
 ```{r}
-df1 = msp_fp |>
+df1 = msp_fp_encounters |>
   group_by(pracnum, is_LFP) |>
   summarise(encounters = sum(encounters), .groups = 'drop') |>
   pivot_wider(names_from = is_LFP, values_from=encounters)
 
-df2 = msp_fp |>
-  group_by(pracnum, yearmon, is_LFP) |>
+df2 = msp_fp_encounters |>
+  group_by(pracnum, srv_mth, is_LFP) |>
   summarise(encounters = sum(encounters), .groups = 'drop') |>
   pivot_wider(names_from = is_LFP, values_from=encounters)
 
